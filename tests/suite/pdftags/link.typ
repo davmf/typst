@@ -92,3 +92,10 @@ This #link("https://outer.org")[is a split
 #link("https://inner.org")[ multi paragraph link.
 
 Thanks for the] multi attention.] Okay!
+
+--- link-tags-empty-supplement pdftags ---
+#set pdf(standard: "ua-1")
+#figure(kind: "entry", supplement: none, [Numbered]) <numbered>
+#figure(kind: "entry", supplement: none, numbering: none, [Unnumbered]) <unnumbered>
+
+#link(<numbered>)[numbered] #link(<unnumbered>)[unnumbered]

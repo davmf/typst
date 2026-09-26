@@ -361,18 +361,27 @@ impl Destination {
                 {
                     let counter = refable.counter();
                     let supplement = refable.supplement().plain_text();
+                    let supplement = supplement.trim();
 
                     if let Some(numbering) = refable.numbering() {
-                        let numbers = counter.display_at(
-                            engine,
-                            loc,
-                            styles,
-                            &numbering.clone().trimmed(),
-                            span,
-                        )?;
-                        return Ok(eco_format!("{supplement} {}", numbers.plain_text()));
+                        let numbers = counter
+                            .display_at(
+                                engine,
+                                loc,
+                                styles,
+                                &numbering.clone().trimmed(),
+                                span,
+                            )?
+                            .plain_text();
+                        if supplement.is_empty() {
+                            return Ok(numbers);
+                        }
+                        return Ok(eco_format!("{supplement} {numbers}"));
                     } else {
                         let page_ref = fallback(engine)?;
+                        if supplement.is_empty() {
+                            return Ok(page_ref);
+                        }
                         return Ok(eco_format!("{supplement}, {page_ref}"));
                     }
                 }
