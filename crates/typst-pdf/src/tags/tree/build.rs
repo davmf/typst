@@ -33,10 +33,10 @@ use typst_library::layout::{
 };
 use typst_library::math::EquationElem;
 use typst_library::model::{
-    ArtifactElem, Document, EmphElem, EnumElem, FigureCaption, FigureElem, FootnoteElem,
-    FootnoteEntry, HeadingElem, LinkMarker, ListElem, Outlinable, OutlineEntry, ParElem,
-    PdfMarkerTag, PdfMarkerTagKind, QuoteElem, StrongElem, TableCell, TableElem,
-    TermsElem, TitleElem,
+    AbbrElem, ArtifactElem, Document, EmphElem, EnumElem, FigureCaption, FigureElem,
+    FootnoteElem, FootnoteEntry, HeadingElem, LinkMarker, ListElem, Outlinable,
+    OutlineEntry, ParElem, PdfMarkerTag, PdfMarkerTagKind, QuoteElem, StrongElem,
+    TableCell, TableElem, TermsElem, TitleElem,
 };
 use typst_library::text::{
     HighlightElem, OverlineElem, RawElem, RawLine, StrikeElem, SubElem, SuperElem,
@@ -493,6 +493,13 @@ fn progress_tree_start(tree: &mut TreeBuilder, elem: &Content) -> GroupId {
             push_tag(tree, elem, Tag::BlockQuote)
         } else {
             push_tag(tree, elem, Tag::InlineQuote)
+        }
+    } else if let Some(abbr) = elem.to_packed::<AbbrElem>() {
+        let expansion = abbr.expansion.trim();
+        if expansion.is_empty() {
+            no_progress(tree)
+        } else {
+            push_tag(tree, elem, Tag::Span.with_expanded(Some(expansion.into())))
         }
     } else if let Some(raw) = elem.to_packed::<RawElem>() {
         if raw.block.val() {

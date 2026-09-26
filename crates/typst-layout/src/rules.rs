@@ -15,14 +15,14 @@ use typst_library::layout::{
     Size, Sizing, SkewElem, Spacing, StackChild, StackElem, TrackSizings, VElem,
 };
 use typst_library::math::EquationElem;
-use typst_library::model::{ArtifactElem, ArtifactKind, PdfMarkerTag};
 use typst_library::model::{
-    Attribution, BibliographyElem, CiteElem, CiteGroup, CslIndentElem, CslLightElem,
-    Destination, DirectLinkElem, DividerElem, EmphElem, EnumElem, FigureCaption,
-    FigureElem, FootnoteElem, FootnoteEntry, HeadingElem, LinkElem, LinkMarker, ListElem,
-    OutlineElem, OutlineEntry, ParElem, ParbreakElem, QuoteElem, RefElem, StrongElem,
-    TableCell, TableElem, TermsElem, TitleElem, Works,
+    AbbrElem, Attribution, BibliographyElem, CiteElem, CiteGroup, CslIndentElem,
+    CslLightElem, Destination, DirectLinkElem, DividerElem, EmphElem, EnumElem,
+    FigureCaption, FigureElem, FootnoteElem, FootnoteEntry, HeadingElem, LinkElem,
+    LinkMarker, ListElem, OutlineElem, OutlineEntry, ParElem, ParbreakElem, QuoteElem,
+    RefElem, StrongElem, TableCell, TableElem, TermsElem, TitleElem, Works,
 };
+use typst_library::model::{ArtifactElem, ArtifactKind, PdfMarkerTag};
 use typst_library::text::{
     DecoLine, Decoration, HighlightElem, ItalicToggle, LinebreakElem, LocalName,
     OverlineElem, RawElem, RawLine, ScriptKind, ShiftSettings, Smallcaps, SmallcapsElem,
@@ -42,6 +42,7 @@ pub fn register(rules: &mut NativeRuleMap) {
     // Model.
     rules.register(Paged, STRONG_RULE);
     rules.register(Paged, EMPH_RULE);
+    rules.register(Paged, ABBR_RULE);
     rules.register(Paged, LIST_RULE);
     rules.register(Paged, ENUM_RULE);
     rules.register(Paged, TERMS_RULE);
@@ -119,6 +120,8 @@ const STRONG_RULE: ShowFn<StrongElem> = |elem, _, styles| {
 
 const EMPH_RULE: ShowFn<EmphElem> =
     |elem, _, _| Ok(elem.body.clone().set(TextElem::emph, ItalicToggle(true)));
+
+const ABBR_RULE: ShowFn<AbbrElem> = |elem, _, _| Ok(elem.body.clone());
 
 const LIST_RULE: ShowFn<ListElem> = |elem, _, styles| {
     let tight = elem.tight.get(styles);

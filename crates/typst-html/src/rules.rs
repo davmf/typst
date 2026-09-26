@@ -17,9 +17,9 @@ use typst_library::layout::{BlockElem, HElem, OuterVAlignment, Sizing};
 use typst_library::math::EquationElem;
 use typst_library::math::ir::resolve_equation;
 use typst_library::model::{
-    Attribution, BibliographyElem, CiteElem, CiteGroup, CslIndentElem, CslLightElem,
-    Destination, DirectLinkElem, DividerElem, EarlyLinkResolver, EmphElem, EnumElem,
-    FigureCaption, FigureElem, FootnoteContainer, FootnoteElem, FootnoteEntry,
+    AbbrElem, Attribution, BibliographyElem, CiteElem, CiteGroup, CslIndentElem,
+    CslLightElem, Destination, DirectLinkElem, DividerElem, EarlyLinkResolver, EmphElem,
+    EnumElem, FigureCaption, FigureElem, FootnoteContainer, FootnoteElem, FootnoteEntry,
     FootnoteMarker, HeadingElem, LinkElem, LinkTarget, ListElem, OutlineElem,
     OutlineEntry, OutlineNode, ParElem, ParbreakElem, QuoteElem, RefElem, StrongElem,
     TableCell, TableElem, TermsElem, TitleElem, Works,
@@ -43,6 +43,7 @@ pub fn register(rules: &mut NativeRuleMap) {
     rules.register(Html, PAR_RULE);
     rules.register(Html, STRONG_RULE);
     rules.register(Html, EMPH_RULE);
+    rules.register(Html, ABBR_RULE);
     rules.register(Html, LIST_RULE);
     rules.register(Html, ENUM_RULE);
     rules.register(Html, TERMS_RULE);
@@ -99,6 +100,13 @@ const STRONG_RULE: ShowFn<StrongElem> =
 
 const EMPH_RULE: ShowFn<EmphElem> =
     |elem, _, _| Ok(HtmlElem::new(tag::em).with_body(Some(elem.body.clone())).pack());
+
+const ABBR_RULE: ShowFn<AbbrElem> = |elem, _, _| {
+    Ok(HtmlElem::new(tag::abbr)
+        .with_attr(attr::title, elem.expansion.clone())
+        .with_body(Some(elem.body.clone()))
+        .pack())
+};
 
 const LIST_RULE: ShowFn<ListElem> = |elem, _, styles| {
     Ok(BlockElem::packed(

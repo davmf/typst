@@ -1,5 +1,6 @@
 //! Structuring elements that define the document model.
 
+mod abbr;
 mod accessibility;
 mod bibliography;
 mod cite;
@@ -24,6 +25,7 @@ mod table;
 mod terms;
 mod title;
 
+pub use self::abbr::*;
 pub use self::accessibility::*;
 pub use self::bibliography::*;
 pub use self::cite::*;
@@ -56,6 +58,7 @@ pub fn define(global: &mut Scope) {
     global.define_elem::<ParbreakElem>();
     global.define_elem::<StrongElem>();
     global.define_elem::<EmphElem>();
+    global.define_elem::<AbbrElem>();
     global.define_elem::<ListElem>();
     global.define_elem::<EnumElem>();
     global.define_elem::<TermsElem>();

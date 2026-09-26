@@ -1,3 +1,6 @@
+c23c8bc524a85a957067aa51d4db5231 abbr-tags
+b69bf7393b14ed6f727eb4a9565f4ac8 abbr-tags-empty-expansion
+7930141870af7695311785d4742e6091 abbr-tags-in-link
 fb8fcffb60d5a67ba437ee7efed3d63d bibliography-basic
 ba2fad776ea01badf4d1a914820cac70 break-tags-nested-parbreak
 8eacf9952ce67d990154b48bb8d425a2 break-tags-nested-parbreak-with-nested-groups

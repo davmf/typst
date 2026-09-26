@@ -1,3 +1,4 @@
+bf87fa9f0fb3fdbeb310e7628e8b1efe abbr-html
 c450b9a1aefa047a2b9a521a68f7f2b5 basic-sup-sub
 a845db3f6f6d466d683136b703f44cf6 basic-table
 7c963ec939cdb49eb712fb761554ecbd bibliography-basic
