@@ -58,6 +58,7 @@ c224c9b9de88cc28465647ad99ac5c01 issue-7777-missing-link-parent
 a82a398895d6aa9fbf754e9bccf1fc73 lang-tags-pars-basic
 1d4724e9204407592d0ed20eeb376b51 lang-tags-propagation
 f3dffe7d5f7f86d4ac3d7a2f181602f0 layout-tags-placement-float
+4261ef30e194eed59c59c5c74b9ae162 link-alt
 cae4c2653cf68f0c43c1619afea2c424 link-basic
 5c6b8b980f727c417326686acb7f854c link-tags-contact-prefix
 0e748d779235b89ee182a3e077ef4c2e link-tags-empty-supplement

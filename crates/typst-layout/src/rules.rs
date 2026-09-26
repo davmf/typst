@@ -225,7 +225,10 @@ const LINK_RULE: ShowFn<LinkElem> = |elem, engine, styles| {
     let span = elem.span();
     let body = elem.body.clone();
     let dest = elem.dest.resolve_early(engine, span)?;
-    let alt = dest.alt_text(engine, styles, span)?;
+    let alt = match elem.alt.get_cloned(styles) {
+        Some(alt) => alt,
+        None => dest.alt_text(engine, styles, span)?,
+    };
     // Manually construct link marker that spans the whole link elem, not just
     // the body.
     Ok(LinkMarker::new(body, Some(alt))

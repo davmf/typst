@@ -71,6 +71,7 @@ use crate::text::{LocalName, TextElem};
 /// least from the text immediately surrounding it. In PDF export, Typst will
 /// automatically generate a tooltip description for links based on their
 /// destination. For links to URLs, the URL itself will be used as the tooltip.
+/// You can provide your own description with the @link.alt[`alt`] parameter.
 ///
 /// = Links in HTML export <links-in-html-export>
 /// In @html[HTML export], a link to a @label[label] or @location[location] will
@@ -212,6 +213,31 @@ pub struct LinkElem {
         _ => args.expect("body")?,
     })]
     pub body: Content,
+
+    /// An alternative description of the link.
+    ///
+    /// In PDF export, this is used as the link's tooltip and read by
+    /// assistive technology (AT). In @html[HTML export], it becomes the
+    /// link's `title` attribute, which browsers show as a tooltip.
+    ///
+    /// If this is `{none}`, Typst generates a description from the
+    /// destination in PDF export, as described in the
+    /// @link:accessibility[accessibility section].
+    ///
+    /// Set this when the generated description is not helpful, for example to
+    /// describe the glossary entry that a term links to. The description
+    /// should complement the link text, as AT may read both.
+    ///
+    /// ```example
+    /// = Kerning <kerning>
+    /// Adjusting the space between pairs of letters.
+    ///
+    /// Good #link(
+    ///   <kerning>,
+    ///   alt: "Kerning: adjusting the space between pairs of letters",
+    /// )[kerning] improves legibility.
+    /// ```
+    pub alt: Option<EcoString>,
 
     /// A destination style that should be applied to elements.
     #[internal]

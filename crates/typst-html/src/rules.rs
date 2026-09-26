@@ -180,8 +180,8 @@ const TERMS_RULE: ShowFn<TermsElem> = |elem, _, styles| {
     ))
 };
 
-// Also check `PATCHED_LINK_RULE` in `docs/src/main.rs` when editing this.
-const LINK_RULE: ShowFn<LinkElem> = |elem, engine, _| {
+// Also check `PATCHED_LINK_RULE` in `docs/src/world.rs` when editing this.
+const LINK_RULE: ShowFn<LinkElem> = |elem, engine, styles| {
     let span = elem.span();
     let dest = elem.dest.resolve_early(engine, span)?;
 
@@ -203,6 +203,7 @@ const LINK_RULE: ShowFn<LinkElem> = |elem, engine, _| {
 
     Ok(HtmlElem::new(tag::a)
         .with_optional_attr(attr::href, href)
+        .with_optional_attr(attr::title, elem.alt.get_cloned(styles))
         .with_body(Some(elem.body.clone()))
         .pack())
 };

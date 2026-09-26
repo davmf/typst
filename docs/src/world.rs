@@ -345,7 +345,7 @@ fn eval_mapped(
 // write absolute links _and_ also avoid the explicit `index.html` in the
 // path. Until there is a better built-in support for configuring these
 // kinds of details, we override the built-in show rule for links.
-const PATCHED_LINK_RULE: ShowFn<LinkElem> = |elem, engine, _| {
+const PATCHED_LINK_RULE: ShowFn<LinkElem> = |elem, engine, styles| {
     let span = elem.span();
     let dest = elem.dest.resolve_early(engine, span)?;
 
@@ -378,6 +378,7 @@ const PATCHED_LINK_RULE: ShowFn<LinkElem> = |elem, engine, _| {
 
     Ok(HtmlElem::new(tag::a)
         .with_optional_attr(attr::href, href)
+        .with_optional_attr(attr::title, elem.alt.get_cloned(styles))
         .with_body(Some(elem.body.clone()))
         .pack())
 };
