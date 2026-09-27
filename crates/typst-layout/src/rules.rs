@@ -20,7 +20,7 @@ use typst_library::model::{
     CslLightElem, Destination, DirectLinkElem, DividerElem, EmphElem, EnumElem,
     FigureCaption, FigureElem, FootnoteElem, FootnoteEntry, HeadingElem, LinkElem,
     LinkMarker, ListElem, OutlineElem, OutlineEntry, ParElem, ParbreakElem, QuoteElem,
-    RefElem, StrongElem, TableCell, TableElem, TermsElem, TitleElem, Works,
+    RefElem, StrongElem, TableCell, TableElem, TermsElem, TitleElem, TooltipElem, Works,
 };
 use typst_library::model::{ArtifactElem, ArtifactKind, PdfMarkerTag};
 use typst_library::text::{
@@ -43,6 +43,7 @@ pub fn register(rules: &mut NativeRuleMap) {
     rules.register(Paged, STRONG_RULE);
     rules.register(Paged, EMPH_RULE);
     rules.register(Paged, ABBR_RULE);
+    rules.register(Paged, TOOLTIP_RULE);
     rules.register(Paged, LIST_RULE);
     rules.register(Paged, ENUM_RULE);
     rules.register(Paged, TERMS_RULE);
@@ -122,6 +123,9 @@ const EMPH_RULE: ShowFn<EmphElem> =
     |elem, _, _| Ok(elem.body.clone().set(TextElem::emph, ItalicToggle(true)));
 
 const ABBR_RULE: ShowFn<AbbrElem> = |elem, _, _| Ok(elem.body.clone());
+
+const TOOLTIP_RULE: ShowFn<TooltipElem> =
+    |elem, _, _| Ok(elem.body.clone().set(TooltipElem::current, Some(elem.text.clone())));
 
 const LIST_RULE: ShowFn<ListElem> = |elem, _, styles| {
     let tight = elem.tight.get(styles);

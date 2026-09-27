@@ -22,7 +22,7 @@ use typst_library::model::{
     EnumElem, FigureCaption, FigureElem, FootnoteContainer, FootnoteElem, FootnoteEntry,
     FootnoteMarker, HeadingElem, LinkElem, LinkTarget, ListElem, OutlineElem,
     OutlineEntry, OutlineNode, ParElem, ParbreakElem, QuoteElem, RefElem, StrongElem,
-    TableCell, TableElem, TermsElem, TitleElem, Works,
+    TableCell, TableElem, TermsElem, TitleElem, TooltipElem, Works,
 };
 use typst_library::routines::Arenas;
 use typst_library::text::{
@@ -44,6 +44,7 @@ pub fn register(rules: &mut NativeRuleMap) {
     rules.register(Html, STRONG_RULE);
     rules.register(Html, EMPH_RULE);
     rules.register(Html, ABBR_RULE);
+    rules.register(Html, TOOLTIP_RULE);
     rules.register(Html, LIST_RULE);
     rules.register(Html, ENUM_RULE);
     rules.register(Html, TERMS_RULE);
@@ -104,6 +105,13 @@ const EMPH_RULE: ShowFn<EmphElem> =
 const ABBR_RULE: ShowFn<AbbrElem> = |elem, _, _| {
     Ok(HtmlElem::new(tag::abbr)
         .with_attr(attr::title, elem.expansion.clone())
+        .with_body(Some(elem.body.clone()))
+        .pack())
+};
+
+const TOOLTIP_RULE: ShowFn<TooltipElem> = |elem, _, _| {
+    Ok(HtmlElem::new(tag::span)
+        .with_attr(attr::title, elem.text.clone())
         .with_body(Some(elem.body.clone()))
         .pack())
 };

@@ -213,3 +213,8 @@ unnecessary_self_imports = "warn"
 unnecessary_semicolon = "warn"
 unnested_or_patterns = "warn"
 unseparated_literal_suffix = "warn"
+
+# Local krilla with text annotation support (prototype only).
+[patch."https://github.com/LaurenzV/krilla"]
+krilla = { path = "../krilla/crates/krilla" }
+krilla-svg = { path = "../krilla/crates/krilla-svg" }

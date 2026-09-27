@@ -24,6 +24,7 @@ mod strong;
 mod table;
 mod terms;
 mod title;
+mod tooltip;
 
 pub use self::abbr::*;
 pub use self::accessibility::*;
@@ -47,6 +48,7 @@ pub use self::strong::*;
 pub use self::table::*;
 pub use self::terms::*;
 pub use self::title::*;
+pub use self::tooltip::*;
 
 use crate::foundations::Scope;
 
@@ -63,6 +65,7 @@ pub fn define(global: &mut Scope) {
     global.define_elem::<EnumElem>();
     global.define_elem::<TermsElem>();
     global.define_elem::<LinkElem>();
+    global.define_elem::<TooltipElem>();
     global.define_elem::<TitleElem>();
     global.define_elem::<HeadingElem>();
     global.define_elem::<DividerElem>();

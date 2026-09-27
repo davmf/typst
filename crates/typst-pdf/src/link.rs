@@ -1,3 +1,4 @@
+use ecow::EcoString;
 use krilla::action::{Action, LinkAction};
 use krilla::annotation::Target;
 use krilla::destination::XyzDestination;
@@ -11,6 +12,12 @@ use typst_syntax::Span;
 use crate::convert::{FrameContext, GlobalContext, PageIndexConverter};
 use crate::tags::{self, AnnotationId, GroupId};
 use crate::util::PointExt;
+
+/// An invisible text annotation that shows a tooltip.
+pub(crate) struct TooltipAnnotation {
+    pub text: String,
+    pub rect: kg::Rect,
+}
 
 pub(crate) struct LinkAnnotation {
     pub kind: LinkAnnotationKind,
@@ -163,6 +170,30 @@ pub(crate) fn handle_link(
     }
 
     Ok(())
+}
+
+pub(crate) fn handle_tooltip(fc: &mut FrameContext, text: &EcoString, size: Size) {
+    if text.trim().is_empty() {
+        return;
+    }
+    let rect = bounding_box(fc, size);
+    fc.tooltip_annotations
+        .push(TooltipAnnotation { text: text.to_string(), rect });
+}
+
+/// Add the tooltip annotations found in the page frame.
+///
+/// These are not tagged: they duplicate information for mouse users, and are
+/// not part of the document's logical structure.
+pub(crate) fn add_tooltip_annotations(
+    page: &mut krilla::page::Page,
+    annotations: Vec<TooltipAnnotation>,
+) {
+    for a in annotations {
+        let annotation =
+            krilla::annotation::TextAnnotation::new(a.rect).with_invisible(true);
+        page.add_annotation(krilla::annotation::Annotation::new_text(annotation, a.text));
+    }
 }
 
 /// Compute the bounding box of the transformed rectangle for this frame.

@@ -3,6 +3,7 @@
 use std::fmt::{self, Debug, Formatter};
 use std::sync::Arc;
 
+use ecow::EcoString;
 use typst_syntax::Span;
 use typst_utils::{LazyHash, Numeric};
 
@@ -494,6 +495,8 @@ pub enum FrameItem {
     Image(Image, Size, Span),
     /// An internal or external link to a destination.
     Link(Destination, Size),
+    /// A tooltip shown when hovering over a region.
+    Tooltip(EcoString, Size),
     /// An introspectable element that produced something within this frame.
     Tag(Tag),
 }
@@ -506,6 +509,7 @@ impl Debug for FrameItem {
             Self::Shape(shape, _) => write!(f, "{shape:?}"),
             Self::Image(image, _, _) => write!(f, "{image:?}"),
             Self::Link(dest, _) => write!(f, "Link({dest:?})"),
+            Self::Tooltip(text, _) => write!(f, "Tooltip({text:?})"),
             Self::Tag(tag) => write!(f, "{tag:?}"),
         }
     }

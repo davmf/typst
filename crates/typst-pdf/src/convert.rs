@@ -30,7 +30,7 @@ use typst_syntax::Span;
 
 use crate::attach::attach_files;
 use crate::image::handle_image;
-use crate::link::{LinkAnnotation, handle_link};
+use crate::link::{LinkAnnotation, TooltipAnnotation, handle_link, handle_tooltip};
 use crate::metadata::build_metadata;
 use crate::outline::build_outline;
 use crate::page::PageLabelExt;
@@ -168,6 +168,9 @@ fn convert_pages(gc: &mut GlobalContext, document: &mut Document) -> SourceResul
 
         surface.finish();
 
+        // Tooltips are added first, so that links are on top of them and
+        // remain clickable where both overlap.
+        crate::link::add_tooltip_annotations(&mut page, fc.tooltip_annotations);
         let link_annotations = fc.link_annotations.into_values().flatten();
         tags::add_link_annotations(gc, &mut page, link_annotations);
     }
@@ -227,6 +230,8 @@ pub(crate) struct FrameContext {
     states: Vec<State>,
     /// The link annotations belonging to a Link tag.
     link_annotations: IndexMap<GroupId, SmallVec<[LinkAnnotation; 1]>, FxBuildHasher>,
+    /// The tooltip annotations on this page.
+    pub(crate) tooltip_annotations: Vec<TooltipAnnotation>,
 }
 
 impl FrameContext {
@@ -235,6 +240,7 @@ impl FrameContext {
             page_idx,
             states: vec![State::new(size)],
             link_annotations: IndexMap::default(),
+            tooltip_annotations: Vec::new(),
         }
     }
 
@@ -372,6 +378,7 @@ pub(crate) fn handle_frame(
                 handle_image(gc, fc, image, *size, surface, *span)?;
             }
             FrameItem::Link(dest, size) => handle_link(fc, gc, dest, *size)?,
+            FrameItem::Tooltip(text, size) => handle_tooltip(fc, text, *size),
             FrameItem::Tag(Tag::Start(_, flags)) => {
                 if flags.tagged {
                     tags::handle_start(gc, fc, surface);
