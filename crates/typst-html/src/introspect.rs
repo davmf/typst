@@ -235,7 +235,7 @@ impl HtmlIntrospectorBuilder {
                 FrameItem::Text(..)
                 | FrameItem::Shape(..)
                 | FrameItem::Image(..)
-                | FrameItem::Tooltip(..) => {}
+                | FrameItem::Annotation(..) => {}
             }
         }
     }

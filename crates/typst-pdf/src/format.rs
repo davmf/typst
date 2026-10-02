@@ -13,14 +13,17 @@ use typst_library::diag::{
 };
 use typst_library::engine::Engine;
 use typst_library::format::{Complete, Fields, Format, FormatElement, Partial, Populate};
+use typst_library::foundations::Datetime;
 use typst_library::foundations::{
     Args, Array, Bytes, Construct, Content, Derived, IntoValue, NativeElement,
     NativeRuleMap, PathOrStr, ShowFn, Smart, StyleChain, Target, Value,
 };
-use typst_library::layout::PageRanges;
+use typst_library::layout::{BoxElem, Em, PageRanges, Ratio, Sizing};
 use typst_library::model::{
-    ArtifactElem, TableCell, TableCellKind, TableElem, TableHeaderScope,
+    AnnotationKind, AnnotationMarker, ArtifactElem, FrameAnnotation, NoteIcon, TableCell,
+    TableCellKind, TableElem, TableHeaderScope,
 };
+use typst_library::visualize::Color;
 use typst_macros::{Cast, cast, elem, func, scope};
 use typst_syntax::Spanned;
 use typst_utils::NonZeroExt;
@@ -31,9 +34,43 @@ pub const FORMAT: Format = Format::new::<PdfFormat>().with_rules(register);
 /// Registers show rules for PDF specific elements.
 pub fn register(rules: &mut NativeRuleMap) {
     rules.register(Target::Paged, ATTACH_RULE);
+    rules.register(Target::Paged, ANNOTATE_RULE);
+    rules.register(Target::Html, ANNOTATE_HTML_RULE);
 }
 
 const ATTACH_RULE: ShowFn<AttachElem> = |_, _, _| Ok(Content::empty());
+
+const ANNOTATE_RULE: ShowFn<AnnotateElem> = |elem, _, styles| {
+    let annotation = FrameAnnotation {
+        location: elem.location().unwrap(),
+        kind: elem.kind.get(styles),
+        contents: elem.contents.clone(),
+        author: elem.author.get_cloned(styles),
+        subject: elem.subject.get_cloned(styles),
+        color: elem.color.get_cloned(styles),
+        opacity: elem.opacity.get(styles),
+        icon: elem.icon.get(styles),
+        open: elem.open.get(styles),
+        visible: elem.visible.get(styles),
+        date: elem.date.get(styles),
+    };
+    let body = elem.body.get_cloned(styles).unwrap_or_default();
+    if annotation.kind == AnnotationKind::Note && annotation.visible {
+        // The icon of a visible note takes up space after the body, like a
+        // footnote marker, so that it doesn't cover any text.
+        let size = Em::new(0.7);
+        let icon = BoxElem::new()
+            .with_width(Sizing::Rel(size.into()))
+            .with_height(Smart::Custom(size.into()))
+            .pack();
+        Ok(body + AnnotationMarker::apply(icon, styles, annotation))
+    } else {
+        Ok(AnnotationMarker::apply(body, styles, annotation))
+    }
+};
+
+const ANNOTATE_HTML_RULE: ShowFn<AnnotateElem> =
+    |elem, _, styles| Ok(elem.body.get_cloned(styles).unwrap_or_default());
 
 /// Typst's PDF export format.
 ///
@@ -362,6 +399,9 @@ impl Construct for PdfFormat {
 impl PdfFormat {
     #[elem]
     type AttachElem;
+
+    #[elem]
+    type AnnotateElem;
 
     #[elem]
     type ArtifactElem;
@@ -950,4 +990,92 @@ pub enum AttachedFileRelationship {
     Alternative,
     /// Additional resources for the document.
     Supplement,
+}
+
+/// An annotation, such as a comment, on part of the document.
+///
+/// PDF viewers show annotations on top of the page and typically list them in
+/// a comments panel. A note is shown as an icon after its body, or at its
+/// position if it has no body. Hovering over or clicking the icon shows the
+/// note's contents.
+///
+/// = Example <example>
+/// ```typ
+/// #set pdf.annotate(author: "Ana")
+///
+/// The results are
+/// #pdf.annotate(
+///   "Add the error bars.",
+/// )[significant].
+///
+/// #pdf.annotate("Expand this.")
+/// ```
+///
+/// = Notes <notes>
+/// - This element is ignored if exporting to a format other than PDF. In HTML
+///   export, the body is shown unchanged.
+/// - Viewers differ in how they show annotations. Some show only the icon and
+///   the contents, others also the author and date.
+/// - The icon of a visible note takes up space in the text, like a footnote
+///   marker. Viewers don't print notes, unless a PDF/A standard is enforced,
+///   so the space stays empty in print. Invisible notes don't affect the
+///   layout.
+///
+/// = Accessibility <accessibility>
+/// The contents are available to assistive technology. Readers of printed
+/// documents don't see annotations, so don't use them for essential
+/// information.
+#[elem(since = "0.16.0", keywords = ["comment", "note"], Locatable)]
+pub struct AnnotateElem {
+    /// The text of the annotation.
+    #[required]
+    pub contents: EcoString,
+
+    /// The content the annotation applies to.
+    ///
+    /// If omitted, the annotation is placed at the current position.
+    #[positional]
+    pub body: Option<Content>,
+
+    /// The kind of annotation.
+    pub kind: AnnotationKind,
+
+    /// The author of the annotation.
+    ///
+    /// Viewers typically show it as the title of the note.
+    pub author: Option<EcoString>,
+
+    /// A short description of the annotation's subject.
+    pub subject: Option<EcoString>,
+
+    /// The color of the annotation.
+    ///
+    /// If `{none}`, notes are yellow.
+    pub color: Option<Color>,
+
+    /// The opacity of the annotation.
+    ///
+    /// Opacities below `{100%}` are not allowed in PDF/A-1.
+    #[default(Ratio::one())]
+    pub opacity: Ratio,
+
+    /// The icon of a visible note.
+    pub icon: NoteIcon,
+
+    /// Whether the note is initially shown open.
+    #[default(false)]
+    pub open: bool,
+
+    /// Whether the note is shown as an icon.
+    ///
+    /// Visible notes take up space for their icon.
+    /// Invisible notes cover their body and act as tooltips: hovering over
+    /// the body shows the contents in some viewers.
+    #[default(true)]
+    pub visible: bool,
+
+    /// The date at which the annotation was last modified.
+    ///
+    /// If `{auto}`, the document's date is used.
+    pub date: Smart<Option<Datetime>>,
 }

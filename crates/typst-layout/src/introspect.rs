@@ -204,7 +204,7 @@ impl PagedIntrospectorBuilder {
                 FrameItem::Text(..)
                 | FrameItem::Shape(..)
                 | FrameItem::Image(..)
-                | FrameItem::Tooltip(..) => {}
+                | FrameItem::Annotation(..) => {}
             }
         }
     }

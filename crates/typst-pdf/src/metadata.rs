@@ -63,6 +63,14 @@ pub fn creation_date(gc: &GlobalContext) -> Option<krilla::metadata::DateTime> {
         _ => return None,
     };
 
+    convert_datetime(datetime, tz)
+}
+
+/// Converts a datetime, optionally with a timezone, to a krilla datetime.
+pub fn convert_datetime(
+    datetime: Datetime,
+    tz: Option<Timezone>,
+) -> Option<krilla::metadata::DateTime> {
     let year = datetime.year().filter(|&y| y >= 0)? as u16;
 
     let mut kd = krilla::metadata::DateTime::new(year);

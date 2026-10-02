@@ -22,6 +22,7 @@ use typst_library::model::{
     LinkMarker, ListElem, OutlineElem, OutlineEntry, ParElem, ParbreakElem, QuoteElem,
     RefElem, StrongElem, TableCell, TableElem, TermsElem, TitleElem, TooltipElem, Works,
 };
+use typst_library::model::{AnnotationMarker, FrameAnnotation};
 use typst_library::model::{ArtifactElem, ArtifactKind, PdfMarkerTag};
 use typst_library::text::{
     DecoLine, Decoration, HighlightElem, ItalicToggle, LinebreakElem, LocalName,
@@ -124,8 +125,11 @@ const EMPH_RULE: ShowFn<EmphElem> =
 
 const ABBR_RULE: ShowFn<AbbrElem> = |elem, _, _| Ok(elem.body.clone());
 
-const TOOLTIP_RULE: ShowFn<TooltipElem> =
-    |elem, _, _| Ok(elem.body.clone().set(TooltipElem::current, Some(elem.text.clone())));
+const TOOLTIP_RULE: ShowFn<TooltipElem> = |elem, _, styles| {
+    let annotation =
+        FrameAnnotation::tooltip(elem.location().unwrap(), elem.text.clone());
+    Ok(AnnotationMarker::apply(elem.body.clone(), styles, annotation))
+};
 
 const LIST_RULE: ShowFn<ListElem> = |elem, _, styles| {
     let tight = elem.tight.get(styles);

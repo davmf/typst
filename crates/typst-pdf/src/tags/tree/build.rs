@@ -260,7 +260,7 @@ fn visit_frame(tree: &mut TreeBuilder, frame: &Frame) -> SourceResult<()> {
             FrameItem::Shape(..) => (),
             FrameItem::Image(..) => (),
             FrameItem::Link(..) => (),
-            FrameItem::Tooltip(..) => (),
+            FrameItem::Annotation(..) => (),
         }
     }
     Ok(())

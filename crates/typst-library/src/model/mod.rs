@@ -2,6 +2,7 @@
 
 mod abbr;
 mod accessibility;
+mod annotation;
 mod bibliography;
 mod cite;
 mod divider;
@@ -28,6 +29,7 @@ mod tooltip;
 
 pub use self::abbr::*;
 pub use self::accessibility::*;
+pub use self::annotation::*;
 pub use self::bibliography::*;
 pub use self::cite::*;
 pub use self::divider::*;

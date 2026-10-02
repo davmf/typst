@@ -25,7 +25,7 @@ use crate::foundations::{Content, elem};
 /// and readers using assistive technology, may not be able to see them. For
 /// abbreviations, prefer @abbr, which makes the expansion available to
 /// assistive technology.
-#[elem(since = "0.16.0", keywords = ["hover", "title"])]
+#[elem(since = "0.16.0", keywords = ["hover", "title"], Locatable)]
 pub struct TooltipElem {
     /// The text of the tooltip.
     #[required]
@@ -34,9 +34,4 @@ pub struct TooltipElem {
     /// The content to show the tooltip for.
     #[required]
     pub body: Content,
-
-    /// The tooltip text that should be applied to frames.
-    #[internal]
-    #[ghost]
-    pub current: Option<EcoString>,
 }

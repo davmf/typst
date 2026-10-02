@@ -1535,6 +1535,13 @@ a1bdb99a562d2db97dace81f9b42c711 par-show-children
 a64fdf9e65b08988b5332f472e0810bc par-spacing-and-first-line-indent
 c8dfdb306c5bfaef407e5d566743952b par-trailing-whitespace
 3a1ed824e4aad2d224bf8b639543dbac parser-backtracking-destructuring-whitespace
+e6f807d349347015d57e8b471099ceeb pdf-annotate-hidden
+89b0758872c5b397c9725011dab546cc pdf-annotate-invisible
+198d191a2778ce03a5b70ff5d254c7b5 pdf-annotate-link
+dce8cd59c9f5ec05d7b062f3aa581c0e pdf-annotate-nested
+399d877cbe30334d6e11711cfb8fa681 pdf-annotate-note
+4d72c01cedbc99a8e867aa22549855a0 pdf-annotate-note-properties
+5f0336f814c6d9c0fcce8570cd8d4342 pdf-annotate-tooltip
 8feb968e768955c679562662c69c7ee0 pdf-validation-multiple-standards
 bf3e8999bb8e0e5b671dea8b92af3f16 place-basic
 10361af84964adcd8ecf5fb40ac66030 place-block-spacing

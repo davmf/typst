@@ -1,7 +1,11 @@
-use ecow::EcoString;
+use std::sync::Arc;
+
+use ecow::EcoVec;
 use typst_library::foundations::{StyleChain, Styles};
 use typst_library::layout::{Abs, Fragment, Frame, FrameItem, HideElem, Point, Sides};
-use typst_library::model::{Destination, LinkElem, ParElem, TooltipElem};
+use typst_library::model::{
+    AnnotationMarker, Destination, FrameAnnotation, LinkElem, ParElem,
+};
 
 /// Frame-level modifications resulting from styles that do not impose any
 /// layout structure.
@@ -18,13 +22,13 @@ use typst_library::model::{Destination, LinkElem, ParElem, TooltipElem};
 /// Currently existing frame modifiers are:
 /// - `HideElem::hidden`
 /// - `LinkElem::dests`
-/// - `TooltipElem::current`
+/// - `AnnotationMarker::current`
 #[derive(Debug, Clone)]
 pub struct FrameModifiers {
     /// A destination to link to.
     dest: Option<Destination>,
-    /// A tooltip to show when hovering.
-    tooltip: Option<EcoString>,
+    /// PDF annotations covering the frame, outermost first.
+    annotations: EcoVec<Arc<FrameAnnotation>>,
     /// Whether the contents of the frame should be hidden.
     hidden: bool,
 }
@@ -34,7 +38,7 @@ impl FrameModifiers {
     pub fn get_in(styles: StyleChain) -> Self {
         Self {
             dest: styles.get_cloned(LinkElem::current),
-            tooltip: styles.get_cloned(TooltipElem::current),
+            annotations: styles.get_cloned(AnnotationMarker::current),
             hidden: styles.get(HideElem::hidden),
         }
     }
@@ -114,8 +118,8 @@ fn modify_frame(
         frame.push(pos, FrameItem::Link(dest.clone(), size));
     }
 
-    if let Some(tooltip) = &modifiers.tooltip {
-        frame.push(pos, FrameItem::Tooltip(tooltip.clone(), size));
+    for annotation in &modifiers.annotations {
+        frame.push(pos, FrameItem::Annotation(annotation.clone(), size));
     }
 
     if modifiers.hidden {
@@ -136,15 +140,15 @@ where
 {
     let modifiers = FrameModifiers::get_in(styles);
 
-    // Disable the current link and tooltip internally since they're already
-    // applied at this level of layout. This means we don't generate redundant
-    // nested links, which may bloat the output considerably.
+    // Disable the current link and annotations internally since they're
+    // already applied at this level of layout. This means we don't generate
+    // redundant nested links, which may bloat the output considerably.
     let mut reset = Styles::new();
     if modifiers.dest.is_some() {
         reset.set(LinkElem::current, None);
     }
-    if modifiers.tooltip.is_some() {
-        reset.set(TooltipElem::current, None);
+    if !modifiers.annotations.is_empty() {
+        reset.set(AnnotationMarker::current, EcoVec::new());
     }
     let styles = styles.chain(&reset);
 
