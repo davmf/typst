@@ -4,10 +4,10 @@ use crate::foundations::{Content, elem};
 
 /// Shows a tooltip when hovering over content.
 ///
-/// - In PDF export, the body is covered by an invisible note annotation that
-///   holds the tooltip text. Viewer support varies: some viewers show the
-///   text when hovering over the body, others show nothing. Viewers may also
-///   offer to edit the note.
+/// - In PDF export, the body is covered by an invisible note that holds the
+///   tooltip text, like @pdf.annotate with `{visible: false}`. Viewer support
+///   varies: some viewers show the text when hovering over the body, others
+///   show nothing. Viewers may also offer to edit the note.
 /// - In @html[HTML export], the body is wrapped in a `<span>` element whose
 ///   `title` attribute holds the tooltip text.
 ///

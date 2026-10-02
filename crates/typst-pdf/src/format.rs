@@ -137,6 +137,9 @@ const ANNOTATE_HTML_RULE: ShowFn<AnnotateElem> =
 /// Typst exposes PDF-specific functionality in the global `pdf` element. See
 /// below for the definitions and options it contains.
 ///
+/// To add comments, notes and tooltips to your document, use
+/// @pdf.annotate[`annotate`].
+///
 /// This element contains some functions without a final API. They are designed
 /// to enhance accessibility for documents with complex tables. This includes
 /// @[`table-summary`], @pdf.header-cell[`header-cell`], and
@@ -1005,10 +1008,11 @@ pub enum AttachedFileRelationship {
 
 /// An annotation, such as a comment, on part of the document.
 ///
-/// PDF viewers show annotations on top of the page and typically list them in
-/// a comments panel. A note is shown as an icon after its body, or at its
-/// position if it has no body. Hovering over or clicking the icon shows the
-/// note's contents.
+/// Annotations are notes that PDF viewers show on top of the page. Viewers
+/// typically also list them in a comments panel, where readers can read,
+/// answer and resolve them. Use annotations to leave review comments in a
+/// draft, to explain a term when hovering over it, or to discuss a passage
+/// with co-authors.
 ///
 /// = Example <example>
 /// ```typ
@@ -1019,36 +1023,115 @@ pub enum AttachedFileRelationship {
 ///   "Add the error bars.",
 /// )[significant].
 ///
-/// #pdf.annotate("Expand this.")
+/// #pdf.annotate("Expand this section.")
 /// ```
 ///
+/// = Notes and tooltips <notes-and-tooltips>
+/// A note is shown as a small icon after its body, or at its position if it
+/// has no body. Hovering over the icon shows a preview of the note, and
+/// clicking it opens the note's window with its author, date and replies. Set
+/// @pdf.annotate.open[`open`] to show the window when the page is displayed.
+///
+/// The icon takes up space in the text, like a footnote marker. Viewers don't
+/// print notes, so this space stays empty in print. Change the icon's shape
+/// with @pdf.annotate.icon[`icon`] and its color with
+/// @pdf.annotate.color[`color`].
+///
+/// With `{visible: false}`, a note has no icon and doesn't take up space.
+/// Instead, it covers its body, and viewers that support it show the note's
+/// contents as a tooltip when hovering over the body. The @tooltip element
+/// produces such a note in PDF export and also works in HTML export.
+///
+/// ```typ
+/// Good #pdf.annotate(
+///   visible: false,
+///   "The space between letters",
+/// )[kerning] matters.
+/// ```
+///
+/// = Reviewing a document <reviewing>
+/// Use set rules to give all of your annotations the same author and color,
+/// so that readers can tell reviewers apart:
+///
+/// ```typ
+/// #set pdf.annotate(
+///   author: "Reviewer 1",
+///   color: orange,
+/// )
+/// ```
+///
+/// To reply to an annotation, give it a @label[label] and create another
+/// annotation with @pdf.annotate.reply-to[`reply-to`]. Replies have no body
+/// and don't appear in the text, so you can write them anywhere in your
+/// document. Viewers show them in a thread below the annotation they reply
+/// to. Replies can themselves be replied to.
+///
+/// ```typ
+/// The method is #pdf.annotate(
+///   author: "Ben",
+///   "Cite the original paper.",
+/// )[novel] <novel>.
+///
+/// #pdf.annotate(
+///   reply-to: <novel>,
+///   author: "Ana",
+///   "Which one?",
+/// ) <which>
+///
+/// #pdf.annotate(
+///   reply-to: <which>,
+///   author: "Ben",
+///   state: "completed",
+///   "Never mind, it's cited.",
+/// )
+/// ```
+///
+/// A reply can mark the annotation it replies to as accepted, rejected,
+/// cancelled or completed with @pdf.annotate.state[`state`]. Viewers that
+/// support review states show them in the thread or the comments panel.
+///
+/// = Viewer support <viewer-support>
+/// Viewers differ in how they show annotations:
+///
+/// - Foxit PDF Reader shows a preview with the author and contents when
+///   hovering over a note's icon, and the full note window when it's open.
+/// - SumatraPDF shows a note's contents as a tooltip, also for invisible
+///   notes, and offers to edit the note.
+/// - Some viewers, such as web browsers, show annotations only partially or
+///   not at all.
+///
+/// Check your document in the viewers your readers use.
+///
 /// = Notes <notes>
-/// - This element is ignored if exporting to a format other than PDF. In HTML
-///   export, the body is shown unchanged.
-/// - Viewers differ in how they show annotations. Some show only the icon and
-///   the contents, others also the author and date.
-/// - The icon of a visible note takes up space in the text, like a footnote
-///   marker. Viewers don't print notes, unless a PDF/A standard is enforced,
-///   so the space stays empty in print. Invisible notes don't affect the
-///   layout.
+/// - This element is ignored if exporting to a format other than PDF. In
+///   HTML export, the body is shown unchanged.
+/// - Opacities below `{100%}` are not allowed when exporting to PDF/A-1.
+/// - Annotations are not yet part of the PDF's tag structure. Exporting to
+///   PDF/UA succeeds, but external checkers may report the annotations.
 ///
 /// = Accessibility <accessibility>
-/// The contents are available to assistive technology. Readers of printed
-/// documents don't see annotations, so don't use them for essential
-/// information.
+/// The contents of annotations are available to assistive technology in
+/// viewers that support it. Readers of printed documents don't see
+/// annotations, and many viewers hide them, so don't use them for
+/// information that's essential to understand the document.
 #[elem(since = "0.16.0", keywords = ["comment", "note"], Locatable)]
 pub struct AnnotateElem {
     /// The text of the annotation.
+    ///
+    /// Viewers show it in the note's preview, window and tooltip.
     #[required]
     pub contents: EcoString,
 
     /// The content the annotation applies to.
     ///
-    /// If omitted, the annotation is placed at the current position.
+    /// If omitted, the annotation's icon is placed at the current position.
+    /// Replies cannot have a body.
     #[positional]
     pub body: Option<Content>,
 
     /// The kind of annotation.
+    ///
+    /// Notes are currently the only kind.
     pub kind: AnnotationKind,
 
     /// The author of the annotation.
@@ -1061,7 +1144,9 @@ pub struct AnnotateElem {
 
     /// The color of the annotation.
     ///
-    /// If `{none}`, notes are yellow.
+    /// For notes, this is the color of the icon. If `{none}`, notes are
+    /// yellow. Replies without a color use the color of the annotation at the
+    /// start of their thread.
     pub color: Option<Color>,
 
     /// The opacity of the annotation.
@@ -1071,9 +1156,15 @@ pub struct AnnotateElem {
     pub opacity: Ratio,
 
     /// The icon of a visible note.
+    ///
+    /// Typst draws `{"comment"}` as a speech bubble, and all other icons as a
+    /// sheet of paper. Some viewers draw their own symbol for each icon.
     pub icon: NoteIcon,
 
-    /// Whether the note is initially shown open.
+    /// Whether the note's window is shown when the page is displayed.
+    ///
+    /// If `{false}`, readers open the note by clicking its icon. With many
+    /// open notes, their windows may cover the page.
     #[default(false)]
     pub open: bool,
 
@@ -1087,14 +1178,24 @@ pub struct AnnotateElem {
 
     /// The date at which the annotation was last modified.
     ///
-    /// If `{auto}`, the document's date is used.
+    /// Viewers show it in the note's window and in the comments panel. If
+    /// `{auto}`, the document's @document.date[date] is used.
+    ///
+    /// ```typ
+    /// #set pdf.annotate(
+    ///   date: datetime(
+    ///     year: 2026, month: 10, day: 2,
+    ///   ),
+    /// )
+    /// ```
     pub date: Smart<Option<Datetime>>,
 
-    /// The annotation that this annotation replies to.
+    /// The label of the annotation that this annotation replies to.
     ///
     /// Viewers that support replies show them in a thread below the
     /// annotation they reply to. Replies have no body and don't appear in the
-    /// text. They can reply to other replies.
+    /// text. They can reply to other replies. See the
+    /// @pdf.annotate:reviewing[section on reviewing] for more details.
     ///
     /// ```typ
     /// The results are #pdf.annotate(
@@ -1111,6 +1212,8 @@ pub struct AnnotateElem {
     pub reply_to: Option<Label>,
 
     /// The review state that a reply gives the annotation it replies to.
+    ///
+    /// Only replies can set a review state.
     ///
     /// ```typ
     /// #pdf.annotate(
@@ -1153,7 +1256,7 @@ pub enum ReviewState {
     Accepted,
     /// The reviewer disagrees with the annotation.
     Rejected,
-    /// The annotation has been cancelled.
+    /// The annotation is no longer relevant.
     Cancelled,
     /// The annotation has been dealt with.
     Completed,
