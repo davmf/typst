@@ -28,7 +28,9 @@ use typst_library::text::FontInstance;
 use typst_library::visualize::{Geometry, Paint, SpotColorantName};
 use typst_syntax::Span;
 
-use crate::annotation::{PendingAnnotations, add_annotations, handle_annotation};
+use crate::annotation::{
+    PendingAnnotations, Replies, add_annotations, collect_replies, handle_annotation,
+};
 use crate::attach::attach_files;
 use crate::image::handle_image;
 use crate::link::{LinkAnnotation, handle_link};
@@ -87,6 +89,7 @@ pub fn convert(
         tags,
     );
 
+    gc.annotation_replies = collect_replies(typst_document);
     convert_pages(&mut gc, &mut document)?;
     attach_files(&gc, &mut document)?;
     let (doc_lang, tree) = tags::resolve(&mut gc)?;
@@ -308,6 +311,8 @@ pub(crate) struct GlobalContext<'a> {
     pub(crate) page_index_converter: PageIndexConverter,
     /// Tagged PDF context.
     pub(crate) tags: Tags,
+    /// Replies to annotations, keyed by the annotation they reply to.
+    pub(crate) annotation_replies: Replies,
 }
 
 impl<'a> GlobalContext<'a> {
@@ -330,6 +335,7 @@ impl<'a> GlobalContext<'a> {
             image_spans: FxHashSet::default(),
             page_index_converter,
             tags,
+            annotation_replies: Replies::default(),
         }
     }
 }

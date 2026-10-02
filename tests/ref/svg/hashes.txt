@@ -1536,6 +1536,9 @@ fcf39cacf4cbc391f5384173d337657f par-trailing-whitespace
 551954665f3fde2f14604a68e7587a5f pdf-annotate-nested
 4a016568938959fa45747068c89c453a pdf-annotate-note
 6a8f4b1013d83b1d6d49888f349126ea pdf-annotate-note-properties
+71dc1d8a50eb5154da446f265bbf2b05 pdf-annotate-reply
+ea022abb81b6f73d2f3b8b6ddfe75263 pdf-annotate-reply-not-annotation
+9129ed2dc599574c1d876ab7132f0a30 pdf-annotate-reply-to-tooltip
 287810b32f2457e4cc6d0f2ebcca6193 pdf-annotate-tooltip
 57cbc73ac0d7bdd190178b0a573ff820 place-basic
 54a6dd2182e64434264974d55e2e19ef place-block-spacing

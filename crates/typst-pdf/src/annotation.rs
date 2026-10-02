@@ -1,17 +1,19 @@
 use std::sync::Arc;
 
 use indexmap::IndexMap;
-use krilla::annotation::{Annotation, TextAnnotation};
+use krilla::annotation::{Annotation, AnnotationHandle, TextAnnotation};
 use krilla::geom as kg;
 use krilla::num::NormalizedF32;
 use krilla::page::Page;
-use rustc_hash::FxBuildHasher;
-use typst_library::foundations::Smart;
-use typst_library::introspection::Location;
+use rustc_hash::{FxBuildHasher, FxHashMap};
+use typst_layout::PagedDocument;
+use typst_library::foundations::{NativeElement, Packed, Smart, StyleChain};
+use typst_library::introspection::{Introspector, Location};
 use typst_library::layout::Size;
 use typst_library::model::{AnnotationKind, FrameAnnotation, NoteIcon};
 
 use crate::convert::{FrameContext, GlobalContext};
+use crate::format::{AnnotateElem, ReviewState};
 use crate::link::bounding_box;
 use crate::metadata::{convert_datetime, creation_date};
 use crate::paint::convert_solid;
@@ -48,16 +50,19 @@ pub(crate) fn add_annotations(
     for (_, pending) in annotations {
         let spec = &pending.spec;
         let rects = merge_rects(pending.rects);
-        match spec.kind {
+        let first = match spec.kind {
             AnnotationKind::Note if !spec.visible => {
                 // Invisible notes are tooltips: cover each line of the body.
                 if spec.contents.trim().is_empty() {
                     continue;
                 }
+                let mut first = None;
                 for rect in rects {
                     let text = TextAnnotation::new(rect).with_invisible(true);
-                    page.add_annotation(build(gc, spec, text));
+                    let handle = page.add_annotation(build(gc, spec, text));
+                    first.get_or_insert((handle, rect));
                 }
+                first
             }
             AnnotationKind::Note => {
                 // The rect is the space reserved for the icon.
@@ -65,9 +70,76 @@ pub(crate) fn add_annotations(
                 let text = TextAnnotation::new(rect)
                     .with_icon(convert_icon(spec.icon))
                     .with_open(spec.open);
-                page.add_annotation(build(gc, spec, text));
+                Some((page.add_annotation(build(gc, spec, text)), rect))
             }
+        };
+
+        // Replies to tooltips that span several lines reply to the first one.
+        if let Some((handle, rect)) = first {
+            add_replies(gc, page, spec, spec.location, handle, rect);
         }
+    }
+}
+
+/// Adds the replies to the annotation at `location`, and their replies.
+///
+/// Replies share the rect and look of the annotation at the root of their
+/// thread, so viewers without support for replies draw them in the same
+/// place.
+fn add_replies(
+    gc: &GlobalContext,
+    page: &mut Page,
+    root: &FrameAnnotation,
+    location: Location,
+    handle: AnnotationHandle,
+    rect: kg::Rect,
+) {
+    let Some(replies) = gc.annotation_replies.get(&location) else { return };
+    for reply in replies {
+        let reply_location = reply.location().unwrap();
+        let mut spec = reply.resolve(reply_location, StyleChain::default());
+        spec.color = spec.color.or_else(|| root.color.clone());
+        let text = TextAnnotation::new(rect)
+            .with_invisible(!root.visible)
+            .with_icon(convert_icon(root.icon));
+        let state = reply.state.get(StyleChain::default()).map(convert_state);
+        let annotation = build(gc, &spec, text)
+            .with_in_reply_to(Some(handle))
+            .with_review_state(state);
+        let reply_handle = page.add_annotation(annotation);
+        add_replies(gc, page, root, reply_location, reply_handle, rect);
+    }
+}
+
+/// Replies to annotations, keyed by the location of the annotation they reply
+/// to, in document order.
+pub(crate) type Replies = FxHashMap<Location, Vec<Packed<AnnotateElem>>>;
+
+/// Collects the replies in the document.
+///
+/// Replies whose target doesn't exist or isn't an annotation are skipped. The
+/// show rule of `pdf.annotate` has already reported them as errors.
+pub(crate) fn collect_replies(document: &PagedDocument) -> Replies {
+    let introspector = document.introspector();
+    let mut replies = Replies::default();
+    for elem in introspector.query(&AnnotateElem::ELEM.select()) {
+        let elem = elem.into_packed::<AnnotateElem>().unwrap();
+        let Some(label) = elem.reply_to.get(StyleChain::default()) else { continue };
+        let Ok(target) = introspector.query_label(label) else { continue };
+        if target.is::<AnnotateElem>() {
+            replies.entry(target.location().unwrap()).or_default().push(elem);
+        }
+    }
+    replies
+}
+
+fn convert_state(state: ReviewState) -> krilla::annotation::ReviewState {
+    use krilla::annotation::ReviewState as K;
+    match state {
+        ReviewState::Accepted => K::Accepted,
+        ReviewState::Rejected => K::Rejected,
+        ReviewState::Cancelled => K::Cancelled,
+        ReviewState::Completed => K::Completed,
     }
 }
 
