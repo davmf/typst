@@ -18,9 +18,9 @@ use typst_library::math::EquationElem;
 use typst_library::math::ir::resolve_equation;
 use typst_library::model::{
     Attribution, BibliographyElem, CiteElem, CiteGroup, CslIndentElem, CslLightElem,
-    Destination, DirectLinkElem, DividerElem, EarlyLinkResolver, EmphElem, EnumElem,
-    FigureCaption, FigureElem, FootnoteContainer, FootnoteElem, FootnoteEntry,
-    FootnoteMarker, HeadingElem, LinkElem, LinkTarget, ListElem, OutlineElem,
+    DelElem, Destination, DirectLinkElem, DividerElem, EarlyLinkResolver, EmphElem,
+    EnumElem, FigureCaption, FigureElem, FootnoteContainer, FootnoteElem, FootnoteEntry,
+    FootnoteMarker, HeadingElem, InsElem, LinkElem, LinkTarget, ListElem, OutlineElem,
     OutlineEntry, OutlineNode, ParElem, ParbreakElem, QuoteElem, RefElem, StrongElem,
     TableCell, TableElem, TermsElem, TitleElem, Works,
 };
@@ -75,6 +75,8 @@ pub fn register(rules: &mut NativeRuleMap) {
     rules.register(Html, OVERLINE_RULE);
     rules.register(Html, STRIKE_RULE);
     rules.register(Html, HIGHLIGHT_RULE);
+    rules.register(Html, INS_RULE);
+    rules.register(Html, DEL_RULE);
     rules.register(Html, SMALLCAPS_RULE);
     rules.register(Html, RAW_RULE);
     rules.register(Html, RAW_LINE_RULE);
@@ -711,6 +713,12 @@ const OVERLINE_RULE: ShowFn<OverlineElem> = |elem, _, _| {
 
 const STRIKE_RULE: ShowFn<StrikeElem> =
     |elem, _, _| Ok(HtmlElem::new(tag::s).with_body(Some(elem.body.clone())).pack());
+
+const INS_RULE: ShowFn<InsElem> =
+    |elem, _, _| Ok(HtmlElem::new(tag::ins).with_body(Some(elem.body.clone())).pack());
+
+const DEL_RULE: ShowFn<DelElem> =
+    |elem, _, _| Ok(HtmlElem::new(tag::del).with_body(Some(elem.body.clone())).pack());
 
 const HIGHLIGHT_RULE: ShowFn<HighlightElem> =
     |elem, _, _| Ok(HtmlElem::new(tag::mark).with_body(Some(elem.body.clone())).pack());

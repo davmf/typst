@@ -129,6 +129,13 @@ impl Content {
         self.0.meta_mut().label = Some(label);
     }
 
+    /// Remove the label of the content, if any.
+    pub fn unlabel(&mut self) {
+        if self.label().is_some() {
+            self.0.meta_mut().label = None;
+        }
+    }
+
     /// Assigns a location to the content.
     ///
     /// This identifies the content and e.g. makes it linkable by

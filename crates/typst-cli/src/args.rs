@@ -441,6 +441,16 @@ pub struct CompileArgs {
     #[clap(long, default_value_t)]
     pub deps_format: DepsFormat,
 
+    /// Shows the changes relative to the document at the given git revision
+    /// (e.g. `HEAD`, `HEAD~2`, a branch name, or a commit hash).
+    ///
+    /// Inserted content is shown in green and deleted content in red with a
+    /// strikethrough. This can be customized with show rules on `diff.ins` and
+    /// `diff.del`. Project files of the old version are read from the git
+    /// repository that contains the project root.
+    #[arg(long = "diff-base", value_name = "REV")]
+    pub diff_base: Option<String>,
+
     /// Processing arguments.
     #[clap(flatten)]
     pub process: ProcessArgs,

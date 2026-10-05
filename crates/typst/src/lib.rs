@@ -51,7 +51,7 @@ use typst_library::diag::{
 use typst_library::engine::{Engine, Route, Sink, Traced};
 use typst_library::format::Format;
 use typst_library::foundations::{
-    NativeRuleMap, Output, StyleChain, Styles, Target, TargetElem, Value,
+    Content, NativeRuleMap, Output, StyleChain, Styles, Target, TargetElem, Value,
 };
 use typst_library::introspection::{
     EmptyIntrospector, ITER_NAMES, Introspector, MAX_ITERS,
@@ -77,7 +77,56 @@ where
     T: Output,
 {
     let mut sink = Sink::new();
-    let output = compile_impl::<T>(world.track(), Traced::default().track(), &mut sink)
+    let output =
+        compile_impl::<T>(world.track(), Traced::default().track(), &mut sink, None)
+            .map_err(deduplicate);
+    Warned { output, warnings: sink.warnings() }
+}
+
+/// Compiles sources into an output that shows the changes relative to an
+/// older version of the document.
+///
+/// The `base` is the content of the older version, as produced by
+/// [`evaluate`] with a world that provides the older sources. Content that
+/// was inserted or deleted since then is marked with the `diff.ins` and
+/// `diff.del` elements.
+#[typst_macros::time]
+pub fn compile_diff<T>(world: &dyn World, base: &Content) -> Warned<SourceResult<T>>
+where
+    T: Output,
+{
+    let mut sink = Sink::new();
+    let output = compile_impl::<T>(
+        world.track(),
+        Traced::default().track(),
+        &mut sink,
+        Some(base),
+    )
+    .map_err(deduplicate);
+    Warned { output, warnings: sink.warnings() }
+}
+
+/// Evaluates the main source file into content without laying it out.
+///
+/// The result can serve as the base for [`compile_diff`].
+#[typst_macros::time]
+pub fn evaluate(world: &dyn World) -> Warned<SourceResult<Content>> {
+    let mut sink = Sink::new();
+    let world = world.track();
+    let output = world
+        .source(world.main())
+        .map_err(|err| hint_invalid_main_file(world, err, world.main()))
+        .and_then(|main| {
+            typst_eval::eval(
+                world,
+                world.library(),
+                Traced::default().track(),
+                sink.track_mut(),
+                Route::default().track(),
+                &main,
+            )
+        })
+        .map(|module| module.content())
         .map_err(deduplicate);
     Warned { output, warnings: sink.warnings() }
 }
@@ -91,7 +140,7 @@ where
 {
     let mut sink = Sink::new();
     let traced = Traced::new(span);
-    compile_impl::<T>(world.track(), traced.track(), &mut sink).ok();
+    compile_impl::<T>(world.track(), traced.track(), &mut sink, None).ok();
     sink.values()
 }
 
@@ -101,6 +150,7 @@ fn compile_impl<T: Output>(
     world: Tracked<dyn World + '_>,
     traced: Tracked<Traced>,
     sink: &mut Sink,
+    old: Option<&Content>,
 ) -> SourceResult<T> {
     let library = world.library();
     match T::target() {
@@ -130,6 +180,12 @@ fn compile_impl<T: Output>(
         &main,
     )?
     .content();
+
+    // Merge with the older version to show the changes, if requested.
+    let content = match old {
+        Some(old) => typst_library::model::diff(old, &content),
+        None => content,
+    };
 
     let mut history: ArrayVec<T, { MAX_ITERS - 1 }> = ArrayVec::new();
     let mut document: T;

@@ -3,6 +3,7 @@
 mod accessibility;
 mod bibliography;
 mod cite;
+mod diff;
 mod divider;
 mod document;
 mod emph;
@@ -27,6 +28,7 @@ mod title;
 pub use self::accessibility::*;
 pub use self::bibliography::*;
 pub use self::cite::*;
+pub use self::diff::{DelElem, InsElem, diff};
 pub use self::divider::*;
 pub use self::document::*;
 pub use self::emph::*;
@@ -72,5 +74,6 @@ pub fn define(global: &mut Scope) {
     global.define_elem::<BibliographyElem>();
     global.define_elem::<TableElem>();
     global.define_func::<numbering>();
+    global.define("diff", diff::module());
     global.reset_category();
 }
