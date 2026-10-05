@@ -46,7 +46,7 @@ pub fn module() -> Module {
 /// = Example <example>
 /// ```example
 /// #show diff.ins: set text(blue)
-/// #show diff.ins: underline
+/// #set underline(stroke: 1.5pt)
 /// The #diff.del[old]#diff.ins[new] text.
 /// ```
 #[elem(title = "Inserted Content", since = "0.16.0", ShowSet)]
