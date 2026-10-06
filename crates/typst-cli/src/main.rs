@@ -2,6 +2,7 @@ mod args;
 mod compile;
 mod completions;
 mod deps;
+mod diff;
 mod download;
 mod eval;
 mod fonts;

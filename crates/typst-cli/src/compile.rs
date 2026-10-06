@@ -2,14 +2,14 @@ use std::ffi::OsStr;
 use std::path::Path;
 
 use chrono::{DateTime, Datelike, Timelike, Utc};
-use ecow::eco_format;
+use ecow::{EcoVec, eco_format, eco_vec};
 use parking_lot::RwLock;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use typst::diag::{
     At, HintedStrResult, HintedString, SourceDiagnostic, SourceResult, StrResult, Warned,
     bail,
 };
-use typst::foundations::{Datetime, Smart};
+use typst::foundations::{Content, Datetime, Smart};
 use typst::layout::{PageRange, PageRanges};
 use typst::model::Document;
 use typst::syntax::Span;
@@ -81,6 +81,8 @@ pub struct CompileConfig {
     pub deps: Option<Output>,
     /// The format to use for dependencies.
     pub deps_format: DepsFormat,
+    /// A git revision whose version of the document to show changes against.
+    pub diff_base: Option<String>,
     /// The PPI (pixels per inch) to use for PNG export.
     pub ppi: Option<f64>,
     /// The export cache for images, used for caching output files in `typst
@@ -274,6 +276,7 @@ impl CompileConfig {
             export_cache: ExportCache::new(),
             deps,
             deps_format,
+            diff_base: args.diff_base.clone(),
             #[cfg(feature = "http-server")]
             server,
             fullscreen,
@@ -345,21 +348,51 @@ fn compile_and_export(
     world: &mut SystemWorld,
     config: &mut CompileConfig,
 ) -> Warned<SourceResult<Vec<Output>>> {
+    let base = match &config.diff_base {
+        Some(rev) => {
+            match crate::diff::evaluate_base(world, rev, config.diagnostic_format) {
+                Ok(base) => Some(base),
+                Err(message) => {
+                    return Warned {
+                        output: Err(eco_vec![SourceDiagnostic::error(
+                            Span::detached(),
+                            message
+                        )]),
+                        warnings: EcoVec::new(),
+                    };
+                }
+            }
+        }
+        None => None,
+    };
+
     match config.output_format {
         OutputFormat::Pdf | OutputFormat::Png | OutputFormat::Svg => {
-            typst::compile::<PagedDocument>(world)
+            compile_document::<PagedDocument>(world, base.as_ref())
                 .and_then(|document| export_paged(&document, config))
         }
         OutputFormat::Html => {
-            let Warned { output, warnings } = typst::compile::<HtmlDocument>(world);
+            let Warned { output, warnings } =
+                compile_document::<HtmlDocument>(world, base.as_ref());
             let result = output.and_then(|document| export_html(&document, config));
             Warned {
                 output: result.map(|()| vec![config.output.clone()]),
                 warnings,
             }
         }
-        OutputFormat::Bundle => typst::compile::<Bundle>(world)
+        OutputFormat::Bundle => compile_document::<Bundle>(world, base.as_ref())
             .and_then(|bundle| export_bundle(bundle, config)),
+    }
+}
+
+/// Compile the document, showing the changes relative to `base` if given.
+fn compile_document<T: typst::foundations::Output>(
+    world: &SystemWorld,
+    base: Option<&Content>,
+) -> Warned<SourceResult<T>> {
+    match base {
+        Some(base) => typst::compile_diff(world, base),
+        None => typst::compile(world),
     }
 }
 

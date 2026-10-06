@@ -17,10 +17,11 @@ use typst_library::layout::{
 use typst_library::math::EquationElem;
 use typst_library::model::{
     AbbrElem, Attribution, BibliographyElem, CiteElem, CiteGroup, CslIndentElem,
-    CslLightElem, Destination, DirectLinkElem, DividerElem, EmphElem, EnumElem,
-    FigureCaption, FigureElem, FootnoteElem, FootnoteEntry, HeadingElem, LinkElem,
-    LinkMarker, ListElem, OutlineElem, OutlineEntry, ParElem, ParbreakElem, QuoteElem,
-    RefElem, StrongElem, TableCell, TableElem, TermsElem, TitleElem, TooltipElem, Works,
+    CslLightElem, DelElem, Destination, DirectLinkElem, DividerElem, EmphElem, EnumElem,
+    FigureCaption, FigureElem, FootnoteElem, FootnoteEntry, HeadingElem, InsElem,
+    LinkElem, LinkMarker, ListElem, OutlineElem, OutlineEntry, ParElem, ParbreakElem,
+    QuoteElem, RefElem, StrongElem, TableCell, TableElem, TermsElem, TitleElem,
+    TooltipElem, Works,
 };
 use typst_library::model::{AnnotationMarker, FrameAnnotation};
 use typst_library::model::{ArtifactElem, ArtifactKind, PdfMarkerTag};
@@ -68,6 +69,8 @@ pub fn register(rules: &mut NativeRuleMap) {
     rules.register(Paged, CSL_INDENT_RULE);
     rules.register(Paged, TABLE_RULE);
     rules.register(Paged, TABLE_CELL_RULE);
+    rules.register(Paged, INS_RULE);
+    rules.register(Paged, DEL_RULE);
 
     // Text.
     rules.register(Paged, SUB_RULE);
@@ -595,6 +598,12 @@ fn show_script(
         }),
     ))
 }
+
+const INS_RULE: ShowFn<InsElem> =
+    |elem, _, _| Ok(UnderlineElem::new(elem.body.clone()).pack().spanned(elem.span()));
+
+const DEL_RULE: ShowFn<DelElem> =
+    |elem, _, _| Ok(StrikeElem::new(elem.body.clone()).pack().spanned(elem.span()));
 
 const UNDERLINE_RULE: ShowFn<UnderlineElem> = |elem, _, styles| {
     Ok(elem.body.clone().set(
