@@ -1,3 +1,6 @@
+c23c8bc524a85a957067aa51d4db5231 abbr-tags
+b69bf7393b14ed6f727eb4a9565f4ac8 abbr-tags-empty-expansion
+7930141870af7695311785d4742e6091 abbr-tags-in-link
 fb8fcffb60d5a67ba437ee7efed3d63d bibliography-basic
 ba2fad776ea01badf4d1a914820cac70 break-tags-nested-parbreak
 8eacf9952ce67d990154b48bb8d425a2 break-tags-nested-parbreak-with-nested-groups
@@ -59,8 +62,10 @@ c224c9b9de88cc28465647ad99ac5c01 issue-7777-missing-link-parent
 a82a398895d6aa9fbf754e9bccf1fc73 lang-tags-pars-basic
 1d4724e9204407592d0ed20eeb376b51 lang-tags-propagation
 f3dffe7d5f7f86d4ac3d7a2f181602f0 layout-tags-placement-float
+4261ef30e194eed59c59c5c74b9ae162 link-alt
 cae4c2653cf68f0c43c1619afea2c424 link-basic
 5c6b8b980f727c417326686acb7f854c link-tags-contact-prefix
+0e748d779235b89ee182a3e077ef4c2e link-tags-empty-supplement
 319c50f5b21c31ff13569f4b5903b7d6 link-tags-heading-with-numbering
 8a18e918e15ed8260bef7a4aee86e3a4 link-tags-heading-without-numbering
 091cb4a5621d1ce40d1b351458142384 link-tags-nesting-across-pars

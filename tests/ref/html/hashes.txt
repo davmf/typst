@@ -1,3 +1,4 @@
+bf87fa9f0fb3fdbeb310e7628e8b1efe abbr-html
 c450b9a1aefa047a2b9a521a68f7f2b5 basic-sup-sub
 a845db3f6f6d466d683136b703f44cf6 basic-table
 7c963ec939cdb49eb712fb761554ecbd bibliography-basic
@@ -98,6 +99,7 @@ c7fdf53834e30a25e43dd1d2e08590fe issue-4828-math-number-multi-char
 4202c01a65f931707295df7ab2f59a23 issue-8261-string-as-non-numeric
 b89f0209b9d6083da48fe869e3c8135d issue-8725-html-raw-multi-byte-char
 58214d2c1fc3a98beab9feb2ab093bfa issue-math-realize-scripting
+7f7ae8cada5497bc69d2f9f47278e48b link-alt
 44fbc75996ca7154896d82a2cc32da32 link-basic
 a401e6e8dbbfb91c6fcd9f50b0812f00 link-html-frame
 aecca822229f41f10fdcfae3954413f1 link-html-frame-ref
@@ -468,6 +470,7 @@ ad987718b189a7a4f9de0f75c8aa9e29 par-semantic-html-parbreak
 04f74c1f6a4cd13b788d6144b31e56e4 par-semantic-html-top-level
 04f74c1f6a4cd13b788d6144b31e56e4 par-semantic-html-top-level-typed
 ee1af2d796df103c690536cc76abaae8 par-semantic-metadata-elements
+757160f5b33181c466926c94205b8834 pdf-annotate-html
 ad4a2b75b2ae315d25efe30c36b3abfc query-within
 70fea5f21b3073a8dcb3d7537bbd50d2 quote-attribution-html
 3c61b759029c8ca2236b7e1ac3f13db7 quote-attribution-link

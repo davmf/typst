@@ -1,5 +1,6 @@
 //! Exporting Typst documents to PDF.
 
+mod annotation;
 mod attach;
 mod convert;
 mod format;
@@ -15,8 +16,8 @@ mod text;
 mod util;
 
 pub use self::format::{
-    AttachElem, AttachedFileRelationship, FORMAT, PdfFormat, PdfFormatOptions,
-    PdfStandard, PdfStandards,
+    AnnotateElem, AttachElem, AttachedFileRelationship, FORMAT, PdfFormat,
+    PdfFormatOptions, PdfStandard, PdfStandards,
 };
 pub use self::metadata::{Timestamp, Timezone};
 

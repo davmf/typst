@@ -1,6 +1,11 @@
-use typst_library::foundations::StyleChain;
+use std::sync::Arc;
+
+use ecow::EcoVec;
+use typst_library::foundations::{StyleChain, Styles};
 use typst_library::layout::{Abs, Fragment, Frame, FrameItem, HideElem, Point, Sides};
-use typst_library::model::{Destination, LinkElem, ParElem};
+use typst_library::model::{
+    AnnotationMarker, Destination, FrameAnnotation, LinkElem, ParElem,
+};
 
 /// Frame-level modifications resulting from styles that do not impose any
 /// layout structure.
@@ -17,10 +22,13 @@ use typst_library::model::{Destination, LinkElem, ParElem};
 /// Currently existing frame modifiers are:
 /// - `HideElem::hidden`
 /// - `LinkElem::dests`
+/// - `AnnotationMarker::current`
 #[derive(Debug, Clone)]
 pub struct FrameModifiers {
     /// A destination to link to.
     dest: Option<Destination>,
+    /// PDF annotations covering the frame, outermost first.
+    annotations: EcoVec<Arc<FrameAnnotation>>,
     /// Whether the contents of the frame should be hidden.
     hidden: bool,
 }
@@ -30,6 +38,7 @@ impl FrameModifiers {
     pub fn get_in(styles: StyleChain) -> Self {
         Self {
             dest: styles.get_cloned(LinkElem::current),
+            annotations: styles.get_cloned(AnnotationMarker::current),
             hidden: styles.get(HideElem::hidden),
         }
     }
@@ -94,7 +103,7 @@ fn modify_frame(
     modifiers: &FrameModifiers,
     link_box_outset: Option<Sides<Abs>>,
 ) {
-    if let Some(dest) = &modifiers.dest {
+    let (pos, size) = {
         let mut pos = Point::zero();
         let mut size = frame.size();
         if let Some(outset) = link_box_outset {
@@ -102,7 +111,15 @@ fn modify_frame(
             pos.x -= outset.left;
             size += outset.sum_by_axis();
         }
+        (pos, size)
+    };
+
+    if let Some(dest) = &modifiers.dest {
         frame.push(pos, FrameItem::Link(dest.clone(), size));
+    }
+
+    for annotation in &modifiers.annotations {
+        frame.push(pos, FrameItem::Annotation(annotation.clone(), size));
     }
 
     if modifiers.hidden {
@@ -123,16 +140,17 @@ where
 {
     let modifiers = FrameModifiers::get_in(styles);
 
-    // Disable the current link internally since it's already applied at this
-    // level of layout. This means we don't generate redundant nested links,
-    // which may bloat the output considerably.
-    let reset;
-    let outer = styles;
-    let mut styles = styles;
+    // Disable the current link and annotations internally since they're
+    // already applied at this level of layout. This means we don't generate
+    // redundant nested links, which may bloat the output considerably.
+    let mut reset = Styles::new();
     if modifiers.dest.is_some() {
-        reset = LinkElem::current.set(None).wrap();
-        styles = outer.chain(&reset);
+        reset.set(LinkElem::current, None);
     }
+    if !modifiers.annotations.is_empty() {
+        reset.set(AnnotationMarker::current, EcoVec::new());
+    }
+    let styles = styles.chain(&reset);
 
     layout(styles).modified(&modifiers)
 }

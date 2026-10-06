@@ -343,3 +343,12 @@ See #metadata(none) <t8>
 #document("%20.html")[Percent]
 #document("文.html")[Non-ASCII]
 #document("文/b/文.html")[With slash]
+
+--- link-alt html pdftags ---
+#set pdf(standard: "ua-1")
+= Kerning <kerning>
+Adjusting the space between pairs of letters.
+
+#link(<kerning>, alt: "Kerning: adjusting the space between pairs of letters")[kerning]
+#link("https://typst.app", alt: "Typst website")[Typst]
+#link("https://typst.app")[no alt]

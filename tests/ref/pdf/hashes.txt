@@ -1,3 +1,5 @@
+e87aa4ddccc038a379405e5e7f47b0dd abbr
+5a6f0f3f87ad713cb36b12699e7f6e66 abbr-show-rule
 74c0d2d3b19385eb059fc384e292bdb0 align-center-in-flow
 3f29e74d8624f6861329a043b6d12c57 align-in-stack
 f1ff5cbe23faec1877243020a3e1e6cd align-right
@@ -1533,6 +1535,15 @@ a1bdb99a562d2db97dace81f9b42c711 par-show-children
 a64fdf9e65b08988b5332f472e0810bc par-spacing-and-first-line-indent
 c8dfdb306c5bfaef407e5d566743952b par-trailing-whitespace
 3a1ed824e4aad2d224bf8b639543dbac parser-backtracking-destructuring-whitespace
+e6f807d349347015d57e8b471099ceeb pdf-annotate-hidden
+89b0758872c5b397c9725011dab546cc pdf-annotate-invisible
+470d731da043d8befacd2a8ae7a128ca pdf-annotate-link
+03583fdaa4a1a5b235f8f547d32f4664 pdf-annotate-nested
+f9c2fa3a2ea0ba4e937e57d04f28ef6d pdf-annotate-note
+e256e0f4f0448ea6bb9f46aa4adc9a5e pdf-annotate-note-properties
+70b89eb74d5f4778406ed2eaefa66d82 pdf-annotate-reply
+4edfc87ab2e8956d68fbc4cb58bbb466 pdf-annotate-reply-to-tooltip
+5f0336f814c6d9c0fcce8570cd8d4342 pdf-annotate-tooltip
 8feb968e768955c679562662c69c7ee0 pdf-validation-multiple-standards
 bf3e8999bb8e0e5b671dea8b92af3f16 place-basic
 10361af84964adcd8ecf5fb40ac66030 place-block-spacing

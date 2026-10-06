@@ -28,6 +28,9 @@ use typst_library::text::FontInstance;
 use typst_library::visualize::{Geometry, Paint, SpotColorantName};
 use typst_syntax::Span;
 
+use crate::annotation::{
+    PendingAnnotations, Replies, add_annotations, collect_replies, handle_annotation,
+};
 use crate::attach::attach_files;
 use crate::image::handle_image;
 use crate::link::{LinkAnnotation, handle_link};
@@ -86,6 +89,7 @@ pub fn convert(
         tags,
     );
 
+    gc.annotation_replies = collect_replies(typst_document);
     convert_pages(&mut gc, &mut document)?;
     attach_files(&gc, &mut document)?;
     let (doc_lang, tree) = tags::resolve(&mut gc)?;
@@ -168,6 +172,9 @@ fn convert_pages(gc: &mut GlobalContext, document: &mut Document) -> SourceResul
 
         surface.finish();
 
+        // Other annotations are added first, so that links are on top of them
+        // and remain clickable where both overlap.
+        add_annotations(gc, &mut page, fc.annotations);
         let link_annotations = fc.link_annotations.into_values().flatten();
         tags::add_link_annotations(gc, &mut page, link_annotations);
     }
@@ -227,6 +234,8 @@ pub(crate) struct FrameContext {
     states: Vec<State>,
     /// The link annotations belonging to a Link tag.
     link_annotations: IndexMap<GroupId, SmallVec<[LinkAnnotation; 1]>, FxBuildHasher>,
+    /// The annotations other than links on this page.
+    pub(crate) annotations: PendingAnnotations,
 }
 
 impl FrameContext {
@@ -235,6 +244,7 @@ impl FrameContext {
             page_idx,
             states: vec![State::new(size)],
             link_annotations: IndexMap::default(),
+            annotations: PendingAnnotations::default(),
         }
     }
 
@@ -301,6 +311,8 @@ pub(crate) struct GlobalContext<'a> {
     pub(crate) page_index_converter: PageIndexConverter,
     /// Tagged PDF context.
     pub(crate) tags: Tags,
+    /// Replies to annotations, keyed by the annotation they reply to.
+    pub(crate) annotation_replies: Replies,
 }
 
 impl<'a> GlobalContext<'a> {
@@ -323,6 +335,7 @@ impl<'a> GlobalContext<'a> {
             image_spans: FxHashSet::default(),
             page_index_converter,
             tags,
+            annotation_replies: Replies::default(),
         }
     }
 }
@@ -372,6 +385,9 @@ pub(crate) fn handle_frame(
                 handle_image(gc, fc, image, *size, surface, *span)?;
             }
             FrameItem::Link(dest, size) => handle_link(fc, gc, dest, *size)?,
+            FrameItem::Annotation(annotation, size) => {
+                handle_annotation(fc, annotation, *size);
+            }
             FrameItem::Tag(Tag::Start(_, flags)) => {
                 if flags.tagged {
                     tags::handle_start(gc, fc, surface);
