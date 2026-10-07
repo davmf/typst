@@ -1176,10 +1176,13 @@ pub struct AnnotateElem {
     #[default(true)]
     pub visible: bool,
 
-    /// The date at which the annotation was last modified.
+    /// The date of the annotation.
     ///
-    /// Viewers show it in the note's window and in the comments panel. If
-    /// `{auto}`, the document's @document.date[date] is used.
+    /// It is written as both the annotation's creation date and the date it
+    /// was last modified. Viewers show the latter in the note's window and
+    /// in the comments panel, and update it when the note is edited, so an
+    /// edited note can be told apart from one as written. If `{auto}`, the
+    /// document's @document.date[date] is used.
     ///
     /// ```typ
     /// #set pdf.annotate(
