@@ -145,7 +145,7 @@ fn convert_state(state: ReviewState) -> krilla::annotation::ReviewState {
 
 /// Builds a krilla annotation with the properties shared by all kinds.
 fn build(gc: &GlobalContext, spec: &FrameAnnotation, text: TextAnnotation) -> Annotation {
-    let modified = match spec.date {
+    let date = match spec.date {
         Smart::Auto => creation_date(gc),
         Smart::Custom(Some(date)) => convert_datetime(date, None),
         Smart::Custom(None) => None,
@@ -155,7 +155,8 @@ fn build(gc: &GlobalContext, spec: &FrameAnnotation, text: TextAnnotation) -> An
     Annotation::new_text(text, spec.contents.to_string())
         .with_author(spec.author.as_ref().map(|s| s.to_string()))
         .with_subject(spec.subject.as_ref().map(|s| s.to_string()))
-        .with_modified(modified)
+        .with_created(date)
+        .with_modified(date)
         .with_color(spec.color.as_ref().map(|c| convert_solid(c).0))
         .with_opacity(opacity)
 }
