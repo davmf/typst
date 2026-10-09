@@ -6,14 +6,16 @@ use comemo::Track;
 use ecow::{EcoVec, eco_format};
 use typst_library::diag::{At, warning};
 use typst_library::foundations::{
-    Content, Context, NativeElement, NativeRuleMap, Selector, ShowFn, Smart, StyleChain,
-    Target,
+    Content, Context, NativeElement, NativeRuleMap, Packed, Selector, ShowFn, Smart,
+    StyleChain, Target,
 };
 use typst_library::introspection::{
     Counter, DocumentIntrospection, Locator, QueryIntrospection,
 };
 use typst_library::layout::resolve::{Cell, CellGrid, Entry, Header};
-use typst_library::layout::{BlockElem, HElem, OuterVAlignment, Sizing};
+use typst_library::layout::{
+    BlockElem, GridCell, GridElem, HElem, OuterVAlignment, Sizing,
+};
 use typst_library::math::EquationElem;
 use typst_library::math::ir::resolve_equation;
 use typst_library::model::{
@@ -591,10 +593,23 @@ const CSL_INDENT_RULE: ShowFn<CslIndentElem> = |elem, _, _| {
 
 const TABLE_RULE: ShowFn<TableElem> = |elem, _, styles| {
     let grid = elem.grid.as_ref().unwrap();
-    Ok(show_cellgrid(grid, styles, elem.span()))
+    Ok(show_cellgrid(grid, styles, elem.span(), None))
 };
 
-fn show_cellgrid(grid: &CellGrid, styles: StyleChain, span: Span) -> Content {
+/// Shows a grid as an HTML table with the class `typst-grid`. This is used by
+/// DOCX export, which turns such tables into borderless tables so that their
+/// text stays editable.
+pub(crate) fn show_grid_as_table(elem: &Packed<GridElem>, styles: StyleChain) -> Content {
+    let grid = elem.grid.as_ref().unwrap();
+    show_cellgrid(grid, styles, elem.span(), Some("typst-grid"))
+}
+
+fn show_cellgrid(
+    grid: &CellGrid,
+    styles: StyleChain,
+    span: Span,
+    class: Option<&str>,
+) -> Content {
     let elem = |tag, body| HtmlElem::new(tag).with_body(Some(body)).pack().spanned(span);
     let mut rows: Vec<_> = grid.entries.chunks(grid.non_gutter_column_count()).collect();
 
@@ -682,11 +697,30 @@ fn show_cellgrid(grid: &CellGrid, styles: StyleChain, span: Span) -> Content {
     }
 
     let content = header.into_iter().chain(core::iter::once(body)).chain(footer);
-    BlockElem::packed(elem(tag::table, Content::sequence(content)))
+    let mut table = HtmlElem::new(tag::table).with_body(Some(Content::sequence(content)));
+    if let Some(class) = class {
+        table = table.with_attr(attr::class, class);
+    }
+    BlockElem::packed(table.pack().spanned(span))
 }
 
 fn show_cell(tag: HtmlTag, cell: &Cell, styles: StyleChain) -> Content {
     let cell = cell.body.clone();
+    if let Some(cell) = cell.to_packed::<GridCell>() {
+        let mut attrs = HtmlAttrs::new();
+        let span = |n: NonZeroUsize| (n != NonZeroUsize::MIN).then(|| n.to_string());
+        if let Some(colspan) = span(cell.colspan.get(styles)) {
+            attrs.push(attr::colspan, colspan);
+        }
+        if let Some(rowspan) = span(cell.rowspan.get(styles)) {
+            attrs.push(attr::rowspan, rowspan);
+        }
+        return HtmlElem::new(tag)
+            .with_body(Some(cell.body.clone()))
+            .with_attrs(attrs)
+            .pack()
+            .spanned(cell.span());
+    }
     let Some(cell) = cell.to_packed::<TableCell>() else { return cell };
     let mut attrs = HtmlAttrs::new();
     let span = |n: NonZeroUsize| (n != NonZeroUsize::MIN).then(|| n.to_string());

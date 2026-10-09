@@ -39,12 +39,10 @@ use typst_kit::server::HttpServer;
 pub fn compile(command: &'static CompileCommand) -> HintedStrResult<()> {
     let mut timer = Timer::new_or_placeholder(command.args.timings.clone());
     let mut config = CompileConfig::new(command)?;
-    let mut world = SystemWorld::new(
-        Some(&command.args.input),
-        &command.args.world,
-        &command.args.process,
-    )
-    .map_err(|err| eco_format!("{err}"))?;
+    let process = crate::docx::process_args(&command.args.process, config.output_format);
+    let mut world =
+        SystemWorld::new(Some(&command.args.input), &command.args.world, &process)
+            .map_err(|err| eco_format!("{err}"))?;
     timer.record(&mut world, |world| compile_once(world, &mut config))?
 }
 
@@ -83,6 +81,8 @@ pub struct CompileConfig {
     pub deps_format: DepsFormat,
     /// A git revision whose version of the document to show changes against.
     pub diff_base: Option<String>,
+    /// What reviewers may do with an exported DOCX file.
+    pub docx_protection: typst_docx::Protection,
     /// The PPI (pixels per inch) to use for PNG export.
     pub ppi: Option<f64>,
     /// The export cache for images, used for caching output files in `typst
@@ -121,6 +121,7 @@ impl CompileConfig {
                 Some(ext) if ext.eq_ignore_ascii_case("png") => OutputFormat::Png,
                 Some(ext) if ext.eq_ignore_ascii_case("svg") => OutputFormat::Svg,
                 Some(ext) if ext.eq_ignore_ascii_case("html") => OutputFormat::Html,
+                Some(ext) if ext.eq_ignore_ascii_case("docx") => OutputFormat::Docx,
                 _ => bail!(
                     "could not infer output format for path {}.\n\
                      consider providing the format manually with `--format/-f`",
@@ -141,6 +142,7 @@ impl CompileConfig {
                     OutputFormat::Png => "png",
                     OutputFormat::Svg => "svg",
                     OutputFormat::Html => "html",
+                    OutputFormat::Docx => "docx",
                     OutputFormat::Bundle => "",
                 },
             ))
@@ -277,6 +279,14 @@ impl CompileConfig {
             deps,
             deps_format,
             diff_base: args.diff_base.clone(),
+            docx_protection: match args.docx_protection {
+                args::DocxProtection::None => typst_docx::Protection::None,
+                args::DocxProtection::Comments => typst_docx::Protection::Comments,
+                args::DocxProtection::TrackedChanges => {
+                    typst_docx::Protection::TrackedChanges
+                }
+                args::DocxProtection::ReadOnly => typst_docx::Protection::ReadOnly,
+            },
             #[cfg(feature = "http-server")]
             server,
             fullscreen,
@@ -380,9 +390,39 @@ fn compile_and_export(
                 warnings,
             }
         }
+        OutputFormat::Docx => {
+            let Warned { output, warnings } =
+                compile_document::<HtmlDocument>(world, base.as_ref());
+            let result = output.and_then(|document| export_docx(&document, config));
+            Warned {
+                output: result.map(|()| vec![config.output.clone()]),
+                warnings: crate::docx::filter_warnings(warnings),
+            }
+        }
         OutputFormat::Bundle => compile_document::<Bundle>(world, base.as_ref())
             .and_then(|bundle| export_bundle(bundle, config)),
     }
+}
+
+/// Export to DOCX.
+fn export_docx(document: &HtmlDocument, config: &CompileConfig) -> SourceResult<()> {
+    let options = typst_docx::DocxOptions {
+        protection: config.docx_protection,
+        timestamp: Some(
+            config
+                .creation_timestamp
+                .unwrap_or_else(chrono::Utc::now)
+                .format("%Y-%m-%dT%H:%M:%SZ")
+                .to_string()
+                .into(),
+        ),
+    };
+    let buffer = typst_docx::docx(document, &options)?;
+    config
+        .output
+        .write(&buffer)
+        .map_err(|err| eco_format!("failed to write DOCX file ({err})"))
+        .at(Span::detached())
 }
 
 /// Compile the document, showing the changes relative to `base` if given.
@@ -427,7 +467,7 @@ fn export_paged(
         OutputFormat::Svg => export_image(document, config, ImageExportFormat::Svg)
             .at(Span::detached())
             .into(),
-        OutputFormat::Html | OutputFormat::Bundle => unreachable!(),
+        OutputFormat::Html | OutputFormat::Docx | OutputFormat::Bundle => unreachable!(),
     }
 }
 

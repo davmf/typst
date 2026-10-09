@@ -289,10 +289,16 @@ pub enum Feature {
     Html,
     Bundle,
     A11yExtras,
+    /// Lays out elements that HTML can't represent as frames instead of
+    /// ignoring them, for DOCX export through the HTML target.
+    Docx,
 }
 
 impl Feature {
     /// Iterates over all available features.
+    ///
+    /// This excludes `Docx`, which changes HTML export and is only enabled
+    /// internally for DOCX export.
     pub fn all() -> impl Iterator<Item = Self> {
         [Self::Html, Self::Bundle, Self::A11yExtras].into_iter()
     }
@@ -304,6 +310,7 @@ impl Display for Feature {
             Feature::Html => "html",
             Feature::Bundle => "bundle",
             Feature::A11yExtras => "a11y-extras",
+            Feature::Docx => "docx",
         })
     }
 }
@@ -316,6 +323,7 @@ impl FromStr for Feature {
             "html" => Ok(Self::Html),
             "bundle" => Ok(Self::Bundle),
             "a11y-extras" => Ok(Self::A11yExtras),
+            "docx" => Ok(Self::Docx),
             _ => Err(()),
         }
     }

@@ -109,7 +109,75 @@ pub enum Command {
 
     /// Displays debugging information about Typst.
     Info(InfoCommand),
+
+    /// Brings comments and tracked changes from a reviewed DOCX file back into
+    /// the Typst source.
+    ///
+    /// Comments become `pdf.annotate` calls, with replies as `reply-to`
+    /// annotations. Tracked changes to plain text are applied to the source;
+    /// others become annotations that describe the suggested change.
+    #[command(name = "docx-import")]
+    DocxImport(DocxImportCommand),
 }
+
+/// Brings comments and tracked changes from a reviewed DOCX file back into the
+/// Typst source.
+#[derive(Debug, Clone, Parser)]
+pub struct DocxImportCommand {
+    /// Path to the input Typst file that the DOCX file was exported from.
+    #[clap(value_parser = input_value_parser(), value_hint = ValueHint::FilePath)]
+    pub input: Input,
+
+    /// Path to the reviewed DOCX file.
+    #[clap(value_hint = ValueHint::FilePath)]
+    pub docx: PathBuf,
+
+    /// What to do with tracked changes.
+    #[arg(long = "changes", default_value_t)]
+    pub changes: DocxChanges,
+
+    /// Prints the edits instead of writing them to the source files.
+    #[arg(long)]
+    pub dry_run: bool,
+
+    /// World arguments.
+    #[clap(flatten)]
+    pub world: WorldArgs,
+
+    /// Processing arguments.
+    #[clap(flatten)]
+    pub process: ProcessArgs,
+}
+
+/// What to do with tracked changes when importing a DOCX file.
+#[derive(Debug, Default, Copy, Clone, Eq, PartialEq, ValueEnum)]
+pub enum DocxChanges {
+    /// Apply changes to plain text; turn the others into annotations.
+    #[default]
+    Apply,
+    /// Turn all changes into annotations.
+    Annotate,
+    /// Only report the changes.
+    Ignore,
+}
+
+display_possible_values!(DocxChanges);
+
+/// What reviewers may do with an exported DOCX file.
+#[derive(Debug, Default, Copy, Clone, Eq, PartialEq, ValueEnum)]
+pub enum DocxProtection {
+    /// No restrictions.
+    None,
+    /// Reviewers can only add comments.
+    Comments,
+    /// Reviewers can comment, and all edits are tracked changes.
+    #[default]
+    TrackedChanges,
+    /// The document is read-only.
+    ReadOnly,
+}
+
+display_possible_values!(DocxProtection);
 
 /// Compiles an input file into a supported output format.
 #[derive(Debug, Clone, Parser)]
@@ -451,6 +519,13 @@ pub struct CompileArgs {
     #[arg(long = "diff-base", value_name = "REV")]
     pub diff_base: Option<String>,
 
+    /// What reviewers may do with an exported DOCX file in Word.
+    ///
+    /// The protection has no password: it guards against accidental edits but
+    /// can be turned off in Word.
+    #[arg(long = "docx-protection", default_value_t)]
+    pub docx_protection: DocxProtection,
+
     /// Processing arguments.
     #[clap(flatten)]
     pub process: ProcessArgs,
@@ -674,6 +749,7 @@ pub enum OutputFormat {
     Png,
     Svg,
     Html,
+    Docx,
     Bundle,
 }
 
@@ -730,6 +806,9 @@ pub enum Feature {
     Html,
     Bundle,
     A11yExtras,
+    /// Enabled automatically for DOCX export.
+    #[value(skip)]
+    Docx,
 }
 
 display_possible_values!(Feature);

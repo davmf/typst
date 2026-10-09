@@ -3,6 +3,7 @@ mod compile;
 mod completions;
 mod deps;
 mod diff;
+mod docx;
 mod download;
 mod eval;
 mod fonts;
@@ -78,6 +79,7 @@ fn dispatch() -> HintedStrResult<()> {
         Command::Update(command) => crate::update::update(command)?,
         Command::Completions(command) => crate::completions::completions(command),
         Command::Info(command) => crate::info::info(command)?,
+        Command::DocxImport(command) => crate::docx::import(command)?,
     }
     Ok(())
 }
