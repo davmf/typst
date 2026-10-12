@@ -17,7 +17,7 @@ Pass a path with the `.docx` extension to the `compile` or `watch` subcommand, o
 typst compile report.typ report.docx
 ```
 
-Typst compiles your document the way it does for @format.html[HTML export] and converts the result to Word's format. Your templates, show rules, scripting, and packages are all evaluated as usual. Because Word, not Typst, lays out the pages, the result will not match your PDF page for page.
+Typst compiles your document the way it does for @html[HTML export] and converts the result to Word's format. Your templates, show rules, scripting, and packages are all evaluated as usual. Because Word, not Typst, lays out the pages, the result will not match your PDF page for page.
 
 The following elements are converted into native Word content, so that reviewers can edit and comment on them:
 
