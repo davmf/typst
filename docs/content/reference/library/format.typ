@@ -12,6 +12,8 @@ Typst documents can be exported to various different export formats. This sectio
 
 Each export format has an associated element through which it can be configured. These elements are defined in the global `format` module. The major formats `pdf` and `html` are additionally directly available in the global scope.
 
+In addition to these, `typst compile` can export DOCX files for review in Word. DOCX export has no format element, because it has no settings in the document. See the @guides:docx[DOCX guide] to learn how to export a document, control what reviewers can do, and import their comments and tracked changes back into your source.
+
 = #short-or-long[Export setstings][Configuring export settings] <export-settings>
 There are two ways to specify export settings:
 
