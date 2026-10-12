@@ -29,12 +29,9 @@ pub fn watch(command: &'static WatchCommand) -> HintedStrResult<()> {
 
     // Create the world that serves sources, files, and fonts.
     // Additionally, if any files do not exist, wait until they do.
+    let process = crate::docx::process_args(&command.args.process, config.output_format);
     let mut world = loop {
-        match SystemWorld::new(
-            Some(&command.args.input),
-            &command.args.world,
-            &command.args.process,
-        ) {
+        match SystemWorld::new(Some(&command.args.input), &command.args.world, &process) {
             Ok(world) => break world,
             Err(
                 ref err @ (WorldCreationError::InputNotFound(ref path)

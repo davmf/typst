@@ -3233,6 +3233,7 @@ dependencies = [
  "typst",
  "typst-bundle",
  "typst-dev-assets",
+ "typst-docx",
  "typst-eval",
  "typst-html",
  "typst-kit",
@@ -3289,6 +3290,24 @@ dependencies = [
  "unicode-segmentation",
  "unicode_names2",
  "unscanny",
+]
+
+[[package]]
+name = "typst-docx"
+version = "0.15.1"
+dependencies = [
+ "base64",
+ "ecow",
+ "image",
+ "resvg",
+ "roxmltree 0.21.1",
+ "rustc-hash",
+ "similar",
+ "typst-html",
+ "typst-library",
+ "typst-render",
+ "typst-syntax",
+ "zip",
 ]
 
 [[package]]

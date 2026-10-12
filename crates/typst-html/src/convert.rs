@@ -1,10 +1,12 @@
 use ecow::{EcoString, EcoVec, eco_vec};
+use typst_library::Feature;
 use typst_library::diag::{SourceResult, bail, warning};
 use typst_library::engine::Engine;
 use typst_library::foundations::{Content, Packed, StyleChain, Target, TargetElem};
 use typst_library::introspection::{SplitLocator, TagElem};
 use typst_library::layout::{
-    Abs, Axes, BlockBody, BlockElem, BoxElem, HElem, Region, Size,
+    Abs, Axes, BlockBody, BlockElem, BoxElem, ColbreakElem, GridElem, HElem,
+    PagebreakElem, Region, Size, VElem,
 };
 use typst_library::routines::Pair;
 use typst_library::text::{
@@ -12,11 +14,12 @@ use typst_library::text::{
     is_default_ignorable,
 };
 use typst_syntax::Span;
-use typst_utils::SliceExt;
+use typst_utils::{Numeric, SliceExt};
 
 use crate::fragment::{html_block_fragment, html_inline_fragment, html_math_fragment};
 use crate::{
-    FrameElem, HtmlElem, HtmlElement, HtmlFrame, HtmlNode, attr, css, property, tag,
+    FrameElem, HtmlElem, HtmlElement, HtmlFrame, HtmlNode, HtmlTag, attr, css, property,
+    tag,
 };
 
 /// What and how to convert.
@@ -152,6 +155,8 @@ fn handle(
         // be wrapped in a `box` to omit the `display` annotation.
         make_block_level(&mut node).unwrap();
         converter.push(node);
+    } else if converter.engine.library.features.is_enabled(Feature::Docx) {
+        handle_docx_fallback(converter, child, styles)?;
     } else {
         converter.engine.sink.warn(warning!(
             child.span(),
@@ -159,6 +164,66 @@ fn handle(
             child.elem().name(),
         ));
     }
+    Ok(())
+}
+
+/// The text width in centimeters that DOCX export lays out frames for: an A4
+/// page with 2.5cm margins, which is what the DOCX exporter writes.
+const DOCX_TEXT_WIDTH_CM: f64 = 16.0;
+
+/// Handles an element that HTML can't represent when exporting to DOCX.
+///
+/// Page breaks become a `typst-pagebreak` element, spacing is dropped, and
+/// everything else is laid out as a frame, so that shapes and other visual
+/// content are kept as images.
+fn handle_docx_fallback(
+    converter: &mut Converter,
+    child: &Content,
+    styles: StyleChain,
+) -> SourceResult<()> {
+    if child.is::<PagebreakElem>() {
+        let tag = HtmlTag::intern("typst-pagebreak").unwrap();
+        converter.push(HtmlElement::new(tag).spanned(child.span()));
+        return Ok(());
+    }
+
+    if child.is::<HElem>() || child.is::<VElem>() || child.is::<ColbreakElem>() {
+        return Ok(());
+    }
+
+    // Grids are often used for layout. Keep their text editable.
+    if let Some(grid) = child.to_packed::<GridElem>() {
+        let content = crate::rules::show_grid_as_table(grid, styles);
+        let nodes = html_block_fragment(
+            converter.engine,
+            &content,
+            converter.locator.next(&child.span()),
+            styles,
+            converter.whitespace,
+        )?;
+        converter.extend(nodes);
+        return Ok(());
+    }
+
+    let locator = converter.locator.next(&child.span());
+    let style = TargetElem::target.set(Target::Paged).wrap();
+    let frame = (converter.engine.library.routines.layout_frame)(
+        converter.engine,
+        child,
+        locator,
+        styles.chain(&style),
+        Region::new(
+            Size::new(Abs::cm(DOCX_TEXT_WIDTH_CM), Abs::inf()),
+            Axes::splat(false),
+        ),
+    )?;
+    if frame.width().is_zero() || frame.height().is_zero() {
+        return Ok(());
+    }
+
+    let mut node = HtmlFrame::new(frame, styles, child.span()).into();
+    make_block_level(&mut node).ok();
+    converter.push(node);
     Ok(())
 }
 

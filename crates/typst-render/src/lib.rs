@@ -51,6 +51,20 @@ pub fn render(page: &Page, opts: &RenderOptions<Complete>) -> sk::Pixmap {
     canvas
 }
 
+/// Render a frame into a PNG with a transparent background.
+///
+/// This is used to embed laid-out content into other formats, such as DOCX.
+pub fn render_frame_png(frame: &Frame, pixel_per_pt: f32) -> Vec<u8> {
+    let size = frame.size();
+    let pxw = (pixel_per_pt * size.x.to_f32()).round().max(1.0) as u32;
+    let pxh = (pixel_per_pt * size.y.to_f32()).round().max(1.0) as u32;
+    let ts = sk::Transform::from_scale(pixel_per_pt, pixel_per_pt);
+    let state = State::new(size, ts, pixel_per_pt);
+    let mut canvas = sk::Pixmap::new(pxw, pxh).unwrap();
+    render_frame(&mut canvas, state, frame);
+    canvas.encode_png().unwrap_or_default()
+}
+
 /// Export a document with potentially multiple pages into a single raster image.
 pub fn render_merged(
     document: &PagedDocument,

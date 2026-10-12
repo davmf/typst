@@ -435,6 +435,7 @@ fn parse_features(feature_list: &str) -> StrResult<Features> {
                 Feature::Html => features.html = true,
                 Feature::Bundle => features.bundle = true,
                 Feature::A11yExtras => features.a11y_extras = true,
+                Feature::Docx => {}
             },
             Err(_) => {
                 crate::print_error(&format!("unknown runtime feature: `{feature}`"))

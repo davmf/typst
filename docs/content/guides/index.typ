@@ -20,3 +20,4 @@
 #include "page-setup.typ"
 #include "tables.typ"
 #include "accessibility.typ"
+#include "docx.typ"
